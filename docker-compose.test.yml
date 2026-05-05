@@ -1,0 +1,14 @@
+services:
+  mongodb:
+    image: mongo:7
+    container_name: grp02-medcore-api-mongodb-test
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: ${MONGODB_DB:-notes-api-test}
+    volumes:
+      - mongodb_test_data:/data/db
+
+volumes:
+  mongodb_test_data:
