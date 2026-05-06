@@ -9,6 +9,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      ATLAS_URI: ${{ secrets.ATLAS_URI }}
 
     strategy:
       matrix:
