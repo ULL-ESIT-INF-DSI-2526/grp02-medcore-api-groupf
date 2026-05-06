@@ -11,7 +11,7 @@ app.listen(PORT, async () => {
     // ensure indexes for patients collection
     await ensurePatientIndexes();
   } catch (err) {
-    console.error("Failed to connect to the database:", err);
+    console.error('Failed to connect to the database:', err);
     process.exit(1); // Exit with failure code
   }
 });

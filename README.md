@@ -17,6 +17,7 @@ Abrir primero el docker desktop y luego ejecutar:
 ```bash
 npm run db:test
 ```
+
 ```bash
-npm run test
+npm run local
 ```
