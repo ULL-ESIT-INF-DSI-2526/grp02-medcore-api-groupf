@@ -65,8 +65,3 @@ export async function findPatientById(id: string | ObjectId): Promise<Patient | 
   const _id = typeof id === "string" ? new ObjectId(id) : id;
   return col().findOne({ _id });
 }
-
-
-
-
-
