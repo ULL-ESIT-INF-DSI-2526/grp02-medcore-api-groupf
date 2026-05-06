@@ -9,8 +9,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      ATLAS_URI: ${{ secrets.ATLAS_URI }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v6
@@ -31,6 +29,9 @@ jobs:
 
       - name: Generate coverage info
         run: npm run coverage
+        env:
+          MONGODB_URL: ${{ secrets.ATLAS_URI }}
+          MONGODB_DB: BDD_TEST
 
       - name: Coveralls
         uses: coverallsapp/github-action@v2.3.6
