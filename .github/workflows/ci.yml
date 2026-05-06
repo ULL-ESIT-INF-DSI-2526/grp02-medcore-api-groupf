@@ -38,5 +38,4 @@ jobs:
       - name: Running tests
         run: npm test
         env:
-          MONGODB_URL: ${{ secrets.ATLAS_URI }}
-          MONGODB_DB: BDD_TEST
+          ATLAS_URI: ${{ secrets.BDD_TEST }}

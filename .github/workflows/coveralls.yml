@@ -30,8 +30,7 @@ jobs:
       - name: Generate coverage info
         run: npm run coverage
         env:
-          MONGODB_URL: ${{ secrets.ATLAS_URI }}
-          MONGODB_DB: BDD_TEST
+          ATLAS_URI: ${{ secrets.BDD_TEST }}
 
       - name: Coveralls
         uses: coverallsapp/github-action@v2.3.6
