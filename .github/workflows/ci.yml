@@ -36,6 +36,6 @@ jobs:
         run: npm ci
 
       - name: Running tests
-        run: npm test
         env:
-          ATLAS_URI: ${{ secrets.BDD_TEST }}
+          ATLAS_URI: mongodb://localhost:27017/bdd_test
+        run: npm test

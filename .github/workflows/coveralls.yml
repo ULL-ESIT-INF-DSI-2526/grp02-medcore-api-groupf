@@ -28,9 +28,9 @@ jobs:
         run: npm ci
 
       - name: Generate coverage info
-        run: npm run coverage
         env:
-          ATLAS_URI: ${{ secrets.BDD_TEST }}
+          ATLAS_URI: mongodb://localhost:27017/bdd_test
+        run: npm run coverage
 
       - name: Coveralls
         uses: coverallsapp/github-action@v2.3.6
