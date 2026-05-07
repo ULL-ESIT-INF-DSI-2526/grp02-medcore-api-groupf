@@ -1,5 +1,5 @@
-import { ObjectId } from 'mongodb';
-import { getDb } from '../db/database.js';
+import { Document, Schema, model } from 'mongoose';
+import { ContactDocument, ContactSchema } from '../schema/contact.js';
 
 // Especialidades médicas - El equipo puede ampliar este enum según sea necesario
 export enum MedicalSpecialty {
@@ -45,92 +45,87 @@ export enum StaffStatus {
   INACTIVE = 'inactivo'
 }
 
-export interface ContactInfoDepartment {
-  address: string;
-  phone: string;
-  email: string;
-}
-
-export interface Staff {
-  _id?: ObjectId;
-  // Datos básicos
+export interface StaffDocument extends Document {
   fullName: string;
   collegeId: string; // Único en el sistema
 
   medicalSpecialty: MedicalSpecialty;
   professionalCategory: ProfessionalCategory;
-  yearsOfExperience: number;
   workShift: WorkShift;
-  consultationRoomOrWard?: string; // Número de consulta o planta
-  departmentContact?: ContactInfoDepartment;
   status: StaffStatus;
-  createdAt?: Date;
-  updatedAt?: Date;
+  contactInfo: ContactDocument;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-const COLLECTION = 'staff';
-
-function col() {
-  return getDb().collection<Staff>(COLLECTION);
-}
-
-export async function ensureStaffIndexes(): Promise<void> {
-  const c = col();
-  await c.createIndex({ collegeId: 1 }, { unique: true });
-}
-
-export async function createStaff(
-  data: Omit<Staff, '_id' | 'createdAt' | 'updatedAt'>
-): Promise<Staff | null> {
-  // Validar campos requeridos
-  if (
-    !data.fullName ||
-    !data.collegeId ||
-    !data.medicalSpecialty ||
-    !data.professionalCategory ||
-    data.yearsOfExperience === undefined ||
-    !data.workShift ||
-    !data.status
-  ) {
-    throw new Error('Missing required staff fields');
+const StaffSchema = new Schema<StaffDocument>({
+  fullName: { 
+    type: String, 
+    required: true,
+    trim: true
+  },
+  collegeId: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true
+  },
+  medicalSpecialty: {
+    type: String,
+    required: true,
+    trim: true,
+    validate: (value: string) => {
+      const validSpecialties = Object.values(MedicalSpecialty);
+      if (!validSpecialties.includes(value as MedicalSpecialty)) {
+        throw new Error(`Medical specialty must be one of: ${validSpecialties.join(', ')}`);
+      }
+    }
+  },
+  professionalCategory: {
+    type: String,
+    required: true,
+    trim: true,
+    validate: (value: string) => {
+      const validCategories = Object.values(ProfessionalCategory);
+      if (!validCategories.includes(value as ProfessionalCategory)) {
+        throw new Error(`Professional category must be one of: ${validCategories.join(', ')}`);
+      }
+    }
+  },
+  workShift: {
+    type: String,
+    required: true,
+    trim: true,
+    validate: (value: string) => {
+      const validShifts = Object.values(WorkShift);
+      if (!validShifts.includes(value as WorkShift)) {
+        throw new Error(`Work shift must be one of: ${validShifts.join(', ')}`);
+      }
+    }
+  },
+  status: {
+    type: String,
+    required: true,
+    trim: true,
+    validate: (value: string) => {
+      const validStatuses = Object.values(StaffStatus);
+      if (!validStatuses.includes(value as StaffStatus)) {
+        throw new Error(`Staff status must be one of: ${validStatuses.join(', ')}`);
+      }
+    }
+  },
+  contactInfo: {
+    type: ContactSchema,
+    trim: true
+   },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
   }
+});
 
-  // Validar que yearsOfExperience sea no negativo
-  if (data.yearsOfExperience < 0) {
-    throw new Error('Years of experience cannot be negative');
-  }
-
-  const c = col();
-  const exists = await c.findOne({ collegeId: data.collegeId });
-
-  if (exists) {
-    throw new Error('A staff member with this collegeId already exists');
-  }
-
-  const now = new Date();
-  const res = await c.insertOne({ ...data, createdAt: now, updatedAt: now });
-  return c.findOne({ _id: res.insertedId });
-}
-
-export async function findStaffById(
-  id: string | ObjectId
-): Promise<Staff | null> {
-  const _id = typeof id === 'string' ? new ObjectId(id) : id;
-  return col().findOne({ _id });
-}
-
-// Buscar por nombre (query string)
-export async function findStaffByName(name: string): Promise<Staff[]> {
-  return col()
-    .find({
-      fullName: { $regex: name, $options: 'i' } // Case-insensitive search
-    })
-    .toArray();
-}
-
-// Buscar por número de colegiado
-export async function findStaffByCollegeId(
-  collegeId: string
-): Promise<Staff | null> {
-  return col().findOne({ collegeId });
-}
+export const Staff = model<StaffDocument>('Staff', StaffSchema);

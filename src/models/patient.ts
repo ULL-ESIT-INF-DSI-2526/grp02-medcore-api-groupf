@@ -1,4 +1,5 @@
 import { Document, Schema, model } from 'mongoose';
+import { ContactDocument, ContactSchema } from '../schema/contact.js';
 
 enum BloodGroup {
   A_POS = 'A+',
@@ -37,29 +38,6 @@ export interface PatientDocument extends Document {
   createdAt: Date;
   updatedAt: Date;
 }
-
-export interface ContactDocument {
-  address: string;
-  phone: string;
-  email: string;
-}
-
-const ContactSchema = new Schema<ContactDocument>({
-  address: {
-    type: String,
-    trim: true
-  },
-  phone: {
-    type: String,
-    trim: true
-    // Añadir opcionalmente validador de formato para número de teléfono
-  },
-  email: {
-    type: String,
-    trim: true
-    // Añadir opcionalmente validador de formato para correo electrónico
-  }
-});
 
 const PatientSchema = new Schema<PatientDocument>({
   fullName: { 
@@ -128,6 +106,14 @@ const PatientSchema = new Schema<PatientDocument>({
         throw new Error(`Patient status must be one of: ${validStatuses.join(', ')}`);
       }
     }
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
   }
 });
 
