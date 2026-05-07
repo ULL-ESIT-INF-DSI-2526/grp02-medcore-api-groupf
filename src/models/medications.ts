@@ -1,5 +1,5 @@
-import { ObjectId } from "mongodb";
-import { getDb } from "../db/database.js";
+import { ObjectId } from 'mongodb';
+import { getDb } from '../db/database.js';
 
 export enum Names {
   COMERCIAL_NAME = "Nombre comercial",
@@ -46,7 +46,7 @@ export interface Medications {
   updatedAt?: Date;
 }
 
-const COLLECTION = "Medications";
+const COLLECTION = "medications";
   
 function col() {
   return getDb().collection<Medications>(COLLECTION);
@@ -57,7 +57,7 @@ export async function ensureMedicationIndexes(): Promise<void> {
   await c.createIndex({ nationalCode: 1234567 }, { unique: true });
 }
 
-export async function createMedic(data: Omit<Medications, "_id" | "createdAt" | "updatedAt">): Promise<Medications | null> {
+export async function createMedication(data: Omit<Medications, "_id" | "createdAt" | "updatedAt">): Promise<Medications | null> {
   if (!data.name || 
     !data.nationalCode || 
     !data.dosageForm || 
@@ -110,12 +110,18 @@ export async function findMedicationtById(id: string | ObjectId): Promise<Medica
   return col().findOne({ _id });
 }
 
-export async function findMedicationtByComercialName(Name: string) {
+export async function findMedicationtByComercialName(Name: string): Promise<Medications | null> {
   return col().findOne({Name});
 }
-export async function findMedicationtByActiveIngredient(Name: string) {
+export async function findMedicationtByActiveIngredient(Name: string): Promise<Medications | null> {
   return col().findOne({Name});
 }
-export async function findMedicationtByNationalCode(nationalCode: string){
+export async function findMedicationtByNationalCode(nationalCode: string): Promise<Medications | null>{
   return col().findOne({nationalCode});
+}
+
+export async function updateMedicationStockbyNationalCode(nationalCode: string, valor: number): Promise<void> {
+  await col().updateOne(
+    {nationalCode}, {$inc: {stock: valor}} // $inc: incrementa o decrementa el valor de stock en función de valor
+  )
 }

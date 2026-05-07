@@ -97,3 +97,9 @@ export async function findPatientById(
   const _id = typeof id === 'string' ? new ObjectId(id) : id;
   return col().findOne({ _id });
 }
+
+export async function findPatientByIdentificationNumber(
+  ID: string
+): Promise<Patient | null> {
+  return col().findOne({ ID });
+}
