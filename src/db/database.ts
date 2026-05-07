@@ -1,13 +1,8 @@
-import { MongoClient, Db } from 'mongodb';
+import mongoose from 'mongoose';
 
-let client: MongoClient | null = null;
-let db: Db | null = null;
+const mongoUri = process.env.ATLAS_URI ?? process.env.MONGODB_URL ?? process.env.MONGODB_URI;
 
-const mongoUri =
-  process.env.ATLAS_URI ?? process.env.MONGODB_URL ?? process.env.MONGODB_URI;
-const dbName = process.env.MONGODB_DB_NAME ?? process.env.MONGODB_DB;
-
-export async function connectDB(): Promise<Db> {
+export async function connectDB(): Promise<typeof mongoose> {
   if (!mongoUri) {
     throw new Error(
       'No MongoDB URI specified in env (ATLAS_URI, MONGODB_URL or MONGODB_URI)'
@@ -15,31 +10,32 @@ export async function connectDB(): Promise<Db> {
   }
 
   try {
-    client = new MongoClient(mongoUri);
-    await client.connect();
-    db = dbName ? client.db(dbName) : client.db();
-    console.log(`MongoDB connected (${db.databaseName})`);
-    return db;
+    await mongoose.connect(mongoUri);
+    console.log(`Mongoose connected to: ${mongoose.connection.name}`);
+    return mongoose;
   } catch (err: any) {
-    console.error('MongoDB connection error:', err);
+    console.error('Mongoose connection error:', err);
     throw err;
   }
 }
 
-export function getDb(): Db {
-  if (!db) throw new Error('Database not connected. Call connectDB() first.');
-  return db;
+export function getMongoose() {
+  return mongoose;
+}
+
+export function getDb() {
+  if (!mongoose.connection || !mongoose.connection.db) {
+    throw new Error('Database not connected. Call connectDB() first.');
+  }
+  return mongoose.connection.db;
 }
 
 export async function disconnectDB(): Promise<void> {
-  if (!client) return;
   try {
-    await client.close();
-    client = null;
-    db = null;
-    console.log('MongoDB disconnected');
+    await mongoose.disconnect();
+    console.log('Mongoose disconnected');
   } catch (err: any) {
-    console.error('MongoDB disconnect error:', err);
+    console.error('Mongoose disconnect error:', err);
     throw err;
   }
 }
