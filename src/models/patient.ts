@@ -1,105 +1,134 @@
-import { ObjectId } from 'mongodb';
-import { getDb } from '../db/database.js';
+import { Document, Schema, model } from 'mongoose';
 
-export type BloodGroup =
-  | 'A+'
-  | 'A-'
-  | 'B+'
-  | 'B-'
-  | 'AB+'
-  | 'AB-'
-  | '0+'
-  | '0-';
-export type Gender = 'male' | 'female' | 'other' | 'unknown';
-export type PatientStatus = 'active' | 'temporary_leave' | 'deceased';
+enum BloodGroup {
+  A_POS = 'A+',
+  A_NEG = 'A-',
+  B_POS = 'B+',
+  B_NEG = 'B-',
+  AB_POS = 'AB+',
+  AB_NEG = 'AB-',
+  O_POS = '0+',
+  O_NEG = '0-'
+}
 
-export interface Patient {
-  _id?: ObjectId;
+enum Gender{
+  MALE = 'male',
+  FEMALE = 'female',
+  OTHER = 'other',
+  UNKNOWN = 'unknown'
+}
+
+enum PatientStatus {
+  ACTIVE = 'active',
+  TEMPORARY_LEAVE = 'temporary_leave',
+  DECEASED = 'deceased'
+}
+
+export interface PatientDocument extends Document {
   fullName: string;
   dateOfBirth: Date;
   identificationNumber: string; // DNI / Passport - unique
   recordNumber: string; // Social security or clinical record number - unique
   gender: Gender;
-  contact?: {
-    address?: string;
-    phone?: string;
-    email?: string;
-  };
+  contact: ContactDocument;
   allergies: string[];
-  bloodGroup?: BloodGroup;
+  bloodGroup: BloodGroup;
   status: PatientStatus;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-const COLLECTION = 'patients';
-
-function col() {
-  return getDb().collection<Patient>(COLLECTION);
+export interface ContactDocument {
+  address: string;
+  phone: string;
+  email: string;
 }
 
-const ALLOWED_BLOOD: BloodGroup[] = [
-  'A+',
-  'A-',
-  'B+',
-  'B-',
-  'AB+',
-  'AB-',
-  '0+',
-  '0-'
-];
-
-export async function ensurePatientIndexes(): Promise<void> {
-  const c = col();
-  await c.createIndex({ identificationNumber: 1 }, { unique: true });
-  await c.createIndex({ recordNumber: 1 }, { unique: true });
-}
-
-export async function createPatient(
-  data: Omit<Patient, '_id' | 'createdAt' | 'updatedAt'>
-): Promise<Patient | null> {
-  if (
-    !data.fullName ||
-    !data.dateOfBirth ||
-    !data.identificationNumber ||
-    !data.recordNumber ||
-    !data.gender
-  ) {
-    throw new Error('Missing required patient fields');
+const ContactSchema = new Schema<ContactDocument>({
+  address: {
+    type: String,
+    trim: true
+  },
+  phone: {
+    type: String,
+    trim: true
+    // Añadir opcionalmente validador de formato para número de teléfono
+  },
+  email: {
+    type: String,
+    trim: true
+    // Añadir opcionalmente validador de formato para correo electrónico
   }
+});
 
-  if (data.bloodGroup && !ALLOWED_BLOOD.includes(data.bloodGroup)) {
-    throw new Error('Invalid blood group');
+const PatientSchema = new Schema<PatientDocument>({
+  fullName: { 
+    type: String, 
+    required: true,
+    trim: true
+  },
+  dateOfBirth: {
+    type: Date,
+    required: true,
+    validate: {
+      validator: (value: Date) => value < new Date(),
+      message: 'Date of birth must be in the past'
+    }
+  },
+  identificationNumber: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true
+    // Añadir opcinalmente validador de formato para DNI, pasaporte u otro documento
+  },
+  recordNumber: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true
+    // Añadir opcinalmente validador de formato para número de seguridad social o número de historia clínica
+  },
+  gender: {
+    type: String,
+    required: true,
+    trim: true,
+    validate: (value: string) => {
+      const validGender = Object.values(Gender);
+      if (!validGender.includes(value as Gender)) {
+        throw new Error(`Gender must be one of: ${validGender.join(', ')}`);
+      }
+    }
+  },
+  contact: {
+    type: ContactSchema,
+    trim: true
+  },
+  allergies: {
+    type: [String],
+    default: [],
+    trim: true
+  },
+  bloodGroup: {
+    type: String,
+    trim: true,
+    validate: (value: string) => {
+      const validBloodGroups = Object.values(BloodGroup);
+      if (!validBloodGroups.includes(value as BloodGroup)) {
+        throw new Error(`Blood group must be one of: ${validBloodGroups.join(', ')}`);
+      }
+    }
+  },
+  status: {
+    type: String,
+    trim: true,
+    validate: (value: string) => {
+      const validStatuses = Object.values(PatientStatus);
+      if (!validStatuses.includes(value as PatientStatus)) {
+        throw new Error(`Patient status must be one of: ${validStatuses.join(', ')}`);
+      }
+    }
   }
+});
 
-  const c = col();
-  const exists = await c.findOne({
-    $or: [
-      { identificationNumber: data.identificationNumber },
-      { recordNumber: data.recordNumber }
-    ]
-  });
-
-  if (exists) {
-    throw new Error(
-      'A patient with the same identificationNumber or recordNumber already exists'
-    );
-  }
-
-  const now = new Date();
-  const res = await c.insertOne({ ...data, createdAt: now, updatedAt: now });
-  return c.findOne({ _id: res.insertedId });
-}
-
-export async function findPatientById(
-  id: string | ObjectId
-): Promise<Patient | null> {
-  const _id = typeof id === 'string' ? new ObjectId(id) : id;
-  return col().findOne({ _id });
-}
-
-export async function findPatientByIdentificationNumber(
-  ID: string
-): Promise<Patient | null> {
-  return col().findOne({ ID });
-}
+export const Patient = model<PatientDocument>('Patient', PatientSchema);
