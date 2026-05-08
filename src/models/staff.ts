@@ -2,7 +2,7 @@ import { Document, Schema, model } from 'mongoose';
 import { ContactDocument, ContactSchema } from '../schema/contact.js';
 
 // Especialidades médicas - El equipo puede ampliar este enum según sea necesario
-enum MedicalSpecialty {
+export enum MedicalSpecialty {
   GENERAL_MEDICINE = 'Medicina General',
   PEDIATRICS = 'Pediatría',
   CARDIOLOGY = 'Cardiología',
@@ -21,7 +21,7 @@ enum MedicalSpecialty {
 }
 
 // Categorías profesionales
-enum ProfessionalCategory {
+export enum ProfessionalCategory {
   ATTENDING_PHYSICIAN = 'Médico/a adjunto/a',
   RESIDENT_PHYSICIAN = 'Médico/a residente',
   NURSE = 'Enfermero/a',
@@ -32,7 +32,7 @@ enum ProfessionalCategory {
 }
 
 // Turnos de trabajo
-enum WorkShift {
+export enum WorkShift {
   MORNING = 'Mañana',
   AFTERNOON = 'Tarde',
   NIGHT = 'Noche',
@@ -40,7 +40,7 @@ enum WorkShift {
 }
 
 // Estado del personal
-enum StaffStatus {
+export enum StaffStatus {
   ACTIVE = 'activo',
   INACTIVE = 'inactivo'
 }

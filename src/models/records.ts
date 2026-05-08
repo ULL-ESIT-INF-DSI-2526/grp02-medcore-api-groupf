@@ -1,179 +1,152 @@
-// import { ObjectId } from 'mongodb';
-// import { getDb } from '../db/database.js';
-// import { findStaffByCollegeId } from './staff.js';
-// import { findPatientByIdentificationNumber } from './patient.js';
-// import { findMedicationtByNationalCode, updateMedicationStockbyNationalCode } from './medications.js';
+import mongoose, { Schema, model } from 'mongoose';
+import { Staff } from './staff.js';
+import { Medications } from './medications.js';
+import { Patient } from './patient.js';
 
-// export enum TypeofRecord {
-//   CLINIC_VISIT = 'Consulta Ambulatoria',
-//   HOSPITALIZATION = 'Ingreso Hospitalario'
-// }
+export enum TypeofRecord {
+  CLINIC_VISIT = 'Consulta Ambulatoria',
+  HOSPITALIZATION = 'Ingreso Hospitalario'
+}
 
-// export enum Status {
-//   OPEN = 'abierto',
-//   CLOSE = 'cerrado'
-// }
+export enum Status {
+  OPEN = 'abierto',
+  CLOSE = 'cerrado'
+}
 
-// export interface PrescriptionMedications {
-//   medication_id: string,
-//   cuantity: number;
-//   dosage: string;
-// }
+export interface PrescriptionMedications {
+  medication_id: string,
+  cuantity: number;
+  dosage: string;
+}
 
-// export interface Records {
-//   _id?: ObjectId;
+export interface Records {
+  _id?: mongoose.Types.ObjectId;
 
-//   patientId: string;
-//   staffID: string;
-//   record: TypeofRecord;
-//   admissionDate?: Date | undefined;
-//   reason: string;
-//   diagnosis: string;
-//   prescription: PrescriptionMedications[];
-//   totalPrice?: number;
-//   status: Status;
+  patientId: string;
+  staffID: string;
+  record: TypeofRecord;
+  admissionDate?: Date;
+  reason: string;
+  diagnosis: string;
+  prescription: PrescriptionMedications[];
+  totalPrice?: number;
+  status: Status;
 
-//   createdAt?: Date;
-//   updatedAt?: Date;
-// }
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+const PrescriptionSchema = new Schema<PrescriptionMedications>({
+  medication_id: { type: String, required: true, trim: true },
+  cuantity: { type: Number, required: true, min: 0 },
+  dosage: { type: String, required: true, trim: true }
+});
 
-// const COLLECTION = 'records';
+const RecordsSchema = new Schema<Records>({
+  patientId: { type: String, required: true, trim: true },
+  staffID: { type: String, required: true, trim: true },
+  record: { type: String, required: true, trim: true },
+  admissionDate: { type: Date },
+  reason: { type: String, required: true, trim: true },
+  diagnosis: { type: String, required: true, trim: true },
+  prescription: { type: [PrescriptionSchema], required: true, default: [] },
+  totalPrice: { type: Number, default: 0 },
+  status: { type: String, required: true, trim: true },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
 
-// function col() {
-//   return getDb().collection<Records>(COLLECTION);
-// }
+export const RecordsModel = model<Records>('Record', RecordsSchema);
+
+export async function createrecord(
+  data: Omit<Records, '_id' | 'admissionDate' |'totalPrice' | 'createdAt' | 'updatedAt'>
+): Promise<Records | null> {
+  // Validar campos requeridos
+  if (
+    !data.patientId ||
+    !data.staffID ||
+    !data.record || 
+    !data.reason ||
+    !data.diagnosis ||
+    !data.prescription ||
+    !data.status
+  ) {
+    throw new Error('Missing required Record fields');
+  }
+
+  // Validar que los datos entregados realmente existan en la base de datos
+  const exist_staff = await Staff.findById(data.staffID);
+  if (!exist_staff) {
+    throw new Error('The staff mentioned do not exist');
+  }
+
+  const exist_patient = await Patient.findById(data.patientId);
+  if (!exist_patient) {
+    throw new Error('The patient mentioned do not exist');
+  }
+  let price = 0;
+
+  for (const medications of data.prescription) {
+    const exist_medication = await Medications.findOne({ nationalCode: medications.medication_id });
+    if (!exist_medication){
+      throw new Error('The medication mentioned do not exist');
+    } else if (exist_medication.stock < medications.cuantity){
+      throw new Error('The medication has not enough available stock');
+    } else {
+      price += medications.cuantity * exist_medication.price;
+      await Medications.updateOne({ nationalCode: medications.medication_id }, { $inc: { stock: -medications.cuantity } });
+    }
+  }
+  const now = new Date();
+  const created = await RecordsModel.create({ ...data, admissionDate: now, totalPrice: price, createdAt: now, updatedAt: now });
+  return created.toObject();
+}
+
+export async function findRecordsById(
+  id: string | mongoose.Types.ObjectId
+): Promise<Records | null> {
+  return RecordsModel.findById(id).lean();
+}
 
 
-// export async function createrecord(
-//   data: Omit<Records, '_id' | 'admissionDate' |'totalPrice' | 'createdAt' | 'updatedAt'>
-// ): Promise<Records | null> {
-//   // Validar campos requeridos
-//   if (
-//     !data.patientId ||
-//     !data.staffID ||
-//     !data.record || 
-//     !data.reason ||
-//     !data.diagnosis ||
-//     !data.prescription ||
-//     !data.status
-//   ) {
-//     throw new Error('Missing required Record fields');
-//   }
-
-//   // Validar que los datos entregados realmente existan en la base de datos
+export async function findRecordsByDates(startDate: Date, endDate: Date, register?: TypeofRecord): Promise<Records[]> {
   
-//   const exist_staff = await findStaffByCollegeId(data.staffID);
+  // Si no ha seleccionado un filtro por tipo de registro, se le muestran ambos tipos
 
-//   if (!exist_staff){
-//     throw new Error('The staff mentioned do not exist');
-//   }
+  const filter: any = {
+    admissionDate: { $gte: startDate, $lte: endDate }
+  };
+  if (register != undefined) {
+    filter.record = { $regex: register };
+  }
+  return RecordsModel.find(filter).lean();
 
-//   const exist_patient = await findPatientByIdentificationNumber(data.patientId);
-  
-//   if (!exist_patient){
-//     throw new Error('The patient mentioned do not exist');
-//   }
-//   let price = 0;
+}
 
-//   for (const medications of data.prescription) {
-//     const exist_medication = await findMedicationtByNationalCode(medications.medication_id)
-//     if (!exist_medication){
-//       throw new Error('The medication mentioned do not exist');
-//     } else if(exist_medication.stock < medications.cuantity){
-//       throw new Error('The medication has not enough available stock');
-//     } else {
-//       price += medications.cuantity * exist_medication.price;
-//       await updateMedicationStockbyNationalCode(medications.medication_id, -medications.cuantity);
-//     }
-//   }
+export async function findRecordsByPatient(patient: string): Promise<Records[]> {
+  return RecordsModel.find({ patientId: patient }).lean();
 
+}
 
-//   const c = col();
+export async function updateRecordsByID(id: string | mongoose.Types.ObjectId, newPrescription: PrescriptionMedications[]): Promise<void> {
+  const records = await RecordsModel.findById(id);
+  if (!records) throw new Error('Record unavailable');
 
-//   const now = new Date();
-//   const res = await c.insertOne({ ...data, admissionDate: now ,totalPrice: price, createdAt: now, updatedAt: now });
-//   return c.findOne({ _id: res.insertedId });
-// }
+  // Restock previous prescription
+  for (const medications of records.prescription) {
+    await Medications.updateOne({ nationalCode: medications.medication_id }, { $inc: { stock: medications.cuantity } });
+  }
 
-// export async function findRecordsById(
-//   id: string | ObjectId
-// ): Promise<Records | null> {
-//   const _id = typeof id === 'string' ? new ObjectId(id) : id;
-//   return col().findOne({ _id });
-// }
+  let price = 0;
+  for (const medications of newPrescription) {
+    const exist_medication = await Medications.findOne({ nationalCode: medications.medication_id });
+    if (!exist_medication) throw new Error('The medication mentioned do not exist');
+    if (exist_medication.stock < medications.cuantity) throw new Error('The medication has not enough available stock');
+    price += medications.cuantity * exist_medication.price;
+    await Medications.updateOne({ nationalCode: medications.medication_id }, { $inc: { stock: -medications.cuantity } });
+  }
 
-
-// export async function findRecordsByDates(startDate: Date, endDate: Date, register?: TypeofRecord): Promise<Records[]> {
-  
-//   // Si no ha seleccionado un filtro por tipo de registro, se le muestran ambos tipos
-
-//   if (register == undefined) {
-//     return col().find({
-//       admissionDate: { 
-//         $gte: startDate,              // Greater or equal than start Date
-//         $lte: endDate                 // Less or equal than end Date
-//       }
-//     }).toArray()
-//   }
-
-//   // Si no, se le muestra por el filtro
-
-//   return col().find({
-//     admissionDate: { 
-//       $gte: startDate, 
-//       $lte: endDate
-//     },
-//     record: {
-//       $regex: register
-//     }
-//   }).toArray()
-
-// }
-
-// export async function findRecordsByPatient(patient: string): Promise<Records[]> {
-
-//   return col().find({
-//     patientId: patient
-//   }).toArray()
-
-// }
-
-// export async function updateRecordsByID(id: string | ObjectId, newPrescription: PrescriptionMedications[]): Promise<void> {
-//   const records = await findRecordsById(id);
-//   if (records == undefined){
-//     throw new Error('Record unaviable');
-//   } else {
-//     let price = 0;
-//     // Stock actualizado con los medicamentos cambiados
-//     for (const medications of records.prescription) {
-//       const actual_medication = await findMedicationtByNationalCode(medications.medication_id);
-//       await updateMedicationStockbyNationalCode(medications.medication_id, medications.cuantity);
-//     }
-
-//     for (const medications of newPrescription) {
-//       const exist_medication = await findMedicationtByNationalCode(medications.medication_id)
-//       if (!exist_medication){
-//         throw new Error('The medication mentioned do not exist');
-//       } else if(exist_medication.stock < medications.cuantity){
-//         throw new Error('The medication has not enough available stock');
-//       } else {
-//         price += medications.cuantity * exist_medication.price;
-//         await updateMedicationStockbyNationalCode(medications.medication_id, -medications.cuantity);
-//       }
-//     }
-
-//     const c = col();
-//     const now = new Date();
-//     const _id = typeof id === 'string' ? new ObjectId(id) : id;
-//     c.updateOne(
-//       {_id: _id}, 
-//       {
-//         $set: {
-//           prescription: newPrescription,
-//           totalPrice: price,
-//           updatedAt: now
-//         }
-//       } 
-//     )
-//   }
-// }
+  records.prescription = newPrescription as any;
+  records.totalPrice = price;
+  records.updatedAt = new Date();
+  await records.save();
+}

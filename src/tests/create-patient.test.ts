@@ -1,62 +1,52 @@
-// import { ObjectId } from 'mongodb';
-// import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ObjectId } from 'mongodb';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// const mocks = vi.hoisted(() => ({
-//   patientCollection: {
-//     findOne: vi.fn(),
-//     insertOne: vi.fn(),
-//     createIndex: vi.fn()
-//   },
-//   getDbMock: vi.fn(() => ({
-//     collection: vi.fn((name: string) => {
-//       if (name === 'patients') return mocks.patientCollection;
-//       throw new Error(`Unexpected collection: ${name}`);
-//     })
-//   }))
-// }));
+import { createPatient } from '../patients/patientController.js';
+import { Patient } from '../models/patient.js';
 
-// vi.mock('../db/database.js', () => ({
-//   getDb: mocks.getDbMock
-// }));
+describe('create patient', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
 
-// import { createPatient } from '../models/patient.js';
+  it('creates a patient', async () => {
+    const insertedId = new ObjectId();
+    const createdPatient = {
+      _id: insertedId,
+      fullName: 'Ana Pérez',
+      dateOfBirth: new Date('1990-01-01'),
+      identificationNumber: '12345678A',
+      recordNumber: 'RN-001',
+      gender: 'female' as const,
+      allergies: [],
+      status: 'active' as const,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
 
-// describe('create patient', () => {
-//   beforeEach(() => {
-//     vi.clearAllMocks();
-//   });
+    vi.spyOn(Patient.prototype as any, 'save')
+      .mockResolvedValueOnce(createdPatient);
 
-//   it('creates a patient', async () => {
-//     const insertedId = new ObjectId();
-//     const createdPatient = {
-//       _id: insertedId,
-//       fullName: 'Ana Pérez',
-//       dateOfBirth: new Date('1990-01-01'),
-//       identificationNumber: '12345678A',
-//       recordNumber: 'RN-001',
-//       gender: 'female' as const,
-//       allergies: [],
-//       status: 'active' as const,
-//       createdAt: new Date(),
-//       updatedAt: new Date()
-//     };
+    const req = {
+      body: {
+        fullName: 'Ana Pérez',
+        dateOfBirth: new Date('1990-01-01'),
+        identificationNumber: '12345678A',
+        recordNumber: 'RN-001',
+        gender: 'female',
+        allergies: [],
+        status: 'active'
+      }
+    } as any;
 
-//     mocks.patientCollection.findOne
-//       .mockResolvedValueOnce(null)
-//       .mockResolvedValueOnce(createdPatient);
-//     mocks.patientCollection.insertOne.mockResolvedValueOnce({ insertedId });
+    const res = {
+      status: vi.fn().mockReturnThis(),
+      send: vi.fn()
+    } as any;
 
-//     const result = await createPatient({
-//       fullName: 'Ana Pérez',
-//       dateOfBirth: new Date('1990-01-01'),
-//       identificationNumber: '12345678A',
-//       recordNumber: 'RN-001',
-//       gender: 'female',
-//       allergies: [],
-//       status: 'active'
-//     });
+    await createPatient(req, res);
 
-//     expect(result).toEqual(createdPatient);
-//     expect(mocks.patientCollection.insertOne).toHaveBeenCalledTimes(1);
-//   });
-// });
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.send).toHaveBeenCalledWith(createdPatient);
+  });
+});
