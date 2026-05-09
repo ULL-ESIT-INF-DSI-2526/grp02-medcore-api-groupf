@@ -19,10 +19,6 @@ export async function connectDB(): Promise<typeof mongoose> {
   }
 }
 
-export function getMongoose() {
-  return mongoose;
-}
-
 export function getDb() {
   if (!mongoose.connection || !mongoose.connection.db) {
     throw new Error('Database not connected. Call connectDB() first.');
