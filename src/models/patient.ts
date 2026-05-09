@@ -1,5 +1,6 @@
 import { Document, Schema, model } from 'mongoose';
 import { ContactDocument, ContactSchema } from '../schema/contact.js';
+import validator from 'validator';
 
 enum BloodGroup {
   A_POS = 'A+',
@@ -57,15 +58,23 @@ const PatientSchema = new Schema<PatientDocument>({
     type: String,
     required: true,
     unique: true,
-    trim: true
-    // Añadir opcinalmente validador de formato para DNI, pasaporte u otro documento
+    trim: true,
+    validate: (value: string) => {
+      if(!validator.isIdentityCard(value, 'any') && !validator.isPassportNumber(value, 'any')) {
+        throw new Error('Identification number must be a valid ID or Passport');
+      }
+    }
   },
   recordNumber: {
     type: String,
     required: true,
     unique: true,
-    trim: true
-    // Añadir opcinalmente validador de formato para número de seguridad social o número de historia clínica
+    trim: true,
+    validate: (value: string) => {
+      if (!validator.isAlphanumeric(value)) {
+        throw new Error('Record number must be alphanumeric');
+      }
+    }
   },
   gender: {
     type: String,

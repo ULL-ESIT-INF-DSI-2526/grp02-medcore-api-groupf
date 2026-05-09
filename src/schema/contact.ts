@@ -1,4 +1,5 @@
 import { Schema } from 'mongoose';
+import validator from 'validator';
 
 export interface ContactDocument {
   address: string;
@@ -13,12 +14,20 @@ export const ContactSchema = new Schema<ContactDocument>({
   },
   phone: {
     type: String,
-    trim: true
-    // Añadir opcionalmente validador de formato para número de teléfono
+    trim: true,
+    validate(value: string) {
+      if (!validator.isMobilePhone(value, 'any')) {
+        throw new Error('Invalid phone number format');
+      }
+    }
   },
   email: {
     type: String,
-    trim: true
-    // Añadir opcionalmente validador de formato para correo electrónico
+    trim: true,
+    validate(value: string) {
+      if (!validator.isEmail(value)) {
+        throw new Error('Invalid email format');
+      }
+    }
   }
 });
