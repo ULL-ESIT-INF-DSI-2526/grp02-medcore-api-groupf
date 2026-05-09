@@ -2,6 +2,7 @@ import express from 'express';
 import {
   createMedication,
   deleteMedication,
+  deleteMedicationById,
   getAllMedications,
   getMedicationByCode,
   updateMedication
@@ -14,4 +15,5 @@ MedicationsRouter.get('/medications/all', getAllMedications);
 MedicationsRouter.get('/medications/code/:nationalCode', getMedicationByCode);
 MedicationsRouter.patch('/medications/:id', updateMedication);
 MedicationsRouter.put('/medications/:id', updateMedication);
-MedicationsRouter.delete('/medications/:id', deleteMedication);
+MedicationsRouter.delete('/medications', deleteMedication);
+MedicationsRouter.delete('/medications/:id', deleteMedicationById);

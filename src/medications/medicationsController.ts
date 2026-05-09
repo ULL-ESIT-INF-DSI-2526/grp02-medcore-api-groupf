@@ -50,8 +50,16 @@ export async function getMedicationByCode(req: Request, res: Response) {
   }
 }
 
-
 export async function deleteMedication(req: Request, res: Response) {
+  try {
+    const medication = await Medications.deleteOne({ name: req.body.name });
+    res.send(medication);
+  } catch (error) {
+    res.status(400).send(error);
+  }
+}
+
+export async function deleteMedicationById(req: Request, res: Response) {
   try {
     const medication = await Medications.findByIdAndDelete(req.params.id);
     if (!medication) {
