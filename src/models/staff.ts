@@ -133,7 +133,7 @@ const StaffSchema = new Schema<StaffDocument>({
     type: Number,
     required: true,
     min: 0,
-    validator: (value: number) => {
+    validate: (value: number) => {
       if (!Number.isInteger(value)) {
         throw new Error('Years of experience must be an integer');
       }

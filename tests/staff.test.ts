@@ -333,4 +333,80 @@ describe('Staff Model Validation', () => {
           .toContain('Path `collegeId` (`invalid_college_id`, length 18) is longer than the maximum allowed length (9).');
       });
   });
+
+  test("should throw new error with invalid Medical Specialty", async () => {
+    invalidStaffData.medicalSpecialty = 'Invalid Specialty';
+
+    await request(app)
+      .post('/staff')
+      .send(invalidStaffData)
+      .expect(400)
+      .expect((response: { body: { errors?: { medicalSpecialty?: { message?: string } } } }) => {
+        expect(response.body.errors?.medicalSpecialty?.message)
+          .toContain('Medical specialty must be one of: Medicina General, Pediatría, Cardiología, Traumatología, Oncología, Urgencias, Dermatología, Neurología, Ortopedia, Psiquiatría, Radiología, Cirugía, Gastroenterología, Reumatología, Nefrología');
+      });
+  });
+
+  test("should throw new error with invalid Professional Category", async () => {
+    invalidStaffData.professionalCategory = 'Invalid Category';
+
+    await request(app)
+      .post('/staff')
+      .send(invalidStaffData)
+      .expect(400)
+      .expect((response: { body: { errors?: { professionalCategory?: { message?: string } } } }) => {
+        expect(response.body.errors?.professionalCategory?.message)
+          .toContain('Professional category must be one of: Médico/a adjunto/a, Médico/a residente, Enfermero/a, Auxiliar de enfermería, Jefe/a de servicio, Director/a médico, Otro');
+      });
+  });
+
+  test("should throw new error with invalid Work Shift", async () => {
+    invalidStaffData.workShift = 'Invalid Shift';
+
+    await request(app)
+      .post('/staff')
+      .send(invalidStaffData)
+      .expect(400)
+      .expect((response: { body: { errors?: { workShift?: { message?: string } } } }) => {
+        expect(response.body.errors?.workShift?.message)
+          .toContain('Work shift must be one of: Mañana, Tarde, Noche, Rotativo');
+      });
+  });
+
+  test("should throw new error with invalid Status", async () => {
+    invalidStaffData.status = 'Invalid Status';
+
+    await request(app)
+      .post('/staff')
+      .send(invalidStaffData)
+      .expect(400)
+      .expect((response: { body: { errors?: { status?: { message?: string } } } }) => {
+        expect(response.body.errors?.status?.message)
+          .toContain('Staff status must be one of: activo, inactivo');
+      });
+  });
+
+  test("should throw new error with invalid years of experience", async () => {
+    invalidStaffData.yearsOfExperience = 4.7;
+
+    await request(app)
+      .post('/staff')
+      .send(invalidStaffData)
+      .expect(400)
+      .expect((response: { body: { errors?: { yearsOfExperience?: { message?: string } } } }) => {
+        expect(response.body.errors?.yearsOfExperience?.message)
+          .toContain('Years of experience must be an integer');
+      });
+    
+    invalidStaffData.yearsOfExperience = -1;
+
+    await request(app)
+      .post('/staff')
+      .send(invalidStaffData)
+      .expect(400)
+      .expect((response: { body: { errors?: { yearsOfExperience?: { message?: string } } } }) => {
+        expect(response.body.errors?.yearsOfExperience?.message)
+          .toContain('Path `yearsOfExperience` (-1) is less than minimum allowed value (0).');
+      });
+  });
 });
