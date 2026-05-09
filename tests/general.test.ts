@@ -1,5 +1,4 @@
-import { ObjectId } from 'mongodb';
-import { describe, test, beforeAll, beforeEach, afterAll, expect, vi } from 'vitest';
+import { describe, test, beforeAll, beforeEach, afterAll, expect } from 'vitest';
 import request from 'supertest';
 import { app } from '../src/app.js';
 import { connectDB, disconnectDB } from '../src/db/database.js';

@@ -97,4 +97,35 @@ describe('records routes', () => {
     expect(response.status).toBe(404);
     expect(response.body.message).toBe('Record not found');
   });
+
+  it('deletes a record', async () => {
+    const mockRecord = { 
+      _id: 'record-1', 
+      reason: 'Checkup',
+      toObject: () => ({ _id: 'record-1', reason: 'Checkup' })
+    };
+
+    recordModelMock.findByIdAndDelete.mockReturnValueOnce({
+      lean: vi.fn().mockResolvedValueOnce(mockRecord)
+    });
+
+    const response = await request(app).delete('/records/record-1');
+
+    expect(response.status).toBe(200);
+    expect(response.body.reason).toBe('Checkup');
+  });
+
+  it('returns 404 when trying to delete a missing record', async () => {
+    recordModelMock.findByIdAndDelete.mockReturnValueOnce({
+      lean: vi.fn().mockResolvedValueOnce(null)
+    });
+
+    const response = await request(app).delete('/records/missing-id');
+
+    expect(response.status).toBe(404);
+    expect(response.body.message).toBe('Record not found');
+  });
+
+  
+
 });

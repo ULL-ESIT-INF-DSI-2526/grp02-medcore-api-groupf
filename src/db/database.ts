@@ -20,7 +20,7 @@ export async function connectDB(): Promise<typeof mongoose> {
 }
 
 export function getDb() {
-  if (!mongoose.connection?.db) {
+  if (mongoose.connection.readyState !== 1) {
     throw new Error('Database not connected. Call connectDB() first.');
   }
   return mongoose.connection.db;
