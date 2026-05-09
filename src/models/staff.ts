@@ -126,6 +126,8 @@ const StaffSchema = new Schema<StaffDocument>({
     type: Date,
     default: Date.now
   }
+}, {
+  collection: 'staff'
 });
 
 export const Staff = model<StaffDocument>('Staff', StaffSchema);
