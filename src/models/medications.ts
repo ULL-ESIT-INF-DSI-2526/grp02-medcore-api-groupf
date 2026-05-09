@@ -1,9 +1,5 @@
 import { Document, Schema, model } from 'mongoose';
-
-enum Names {
-  COMERCIAL_NAME = "Nombre comercial",
-  ACTIVE_INGREDIENT_NAME = "Nombre del principio activo"
-}
+import validator from 'validator';
 
 enum DosageForm {
   TABLET = "Comprimido",
@@ -12,7 +8,8 @@ enum DosageForm {
   INJECTABLE_SOLUTION = "Solución inyectable",
   OINTMENT = "Pomada",
   TRANSDERMAL_PATCH = "Parche transdérmico",
-  INHALER = "Inhalador"
+  INHALER = "Inhalador",
+  OTHER = "Otro"
 }
 
 enum AdministrationChannel {
@@ -24,13 +21,18 @@ enum AdministrationChannel {
   INHALATION = "Inhalatoria"
 }
 
+export interface MedicationName {
+  comercialName: string;
+  activeIngredientName: string;
+}
+
 export interface Dose {
   amount: number
   unit: string;
 }
 
 export interface MedicationsDocument extends Document {
-  name: Names;
+  name: MedicationName;
   nationalCode: string; // unico en el sistema
   dosageForm: DosageForm;
   standarDose: Dose;
@@ -46,21 +48,34 @@ export interface MedicationsDocument extends Document {
 
 const MedicationsSchema = new Schema<MedicationsDocument>({
   name: {
-    type: String,
-    required: true,
-    trim: true,
-    validate: (value: string) => {
-      const validNames = Object.values(Names);
-      if (!validNames.includes(value as Names)) {
-        throw new Error(`Medication name must be one of: ${validNames.join(', ')}`);
+    type: {
+      comercialName: {
+        type: String,
+        required: true,
+        trim: true,
+        minlength: 3
+      },
+      activeIngredientName: {
+        type: String,
+        required: true,
+        trim: true,
+        minlength: 3
       }
-    }
+     },
+    required: true,
   },
   nationalCode: {
     type: String,
     required: true,
     unique: true,
-    trim: true
+    trim: true,
+    minlength: 6,
+    maxlength: 6,
+    validate: (value: string) => {
+      if (!validator.isNumeric(value)) {
+        throw new Error('National code must be numeric');
+      }
+    }
   },
   dosageForm: {
     type: String,
@@ -99,7 +114,12 @@ const MedicationsSchema = new Schema<MedicationsDocument>({
   stock: {
     type: Number,
     required: true,
-    min: 0
+    min: 0,
+    validator: (value: number) => {
+      if (!Number.isInteger(value)) {
+        throw new Error('Stock must be an integer');
+      }
+    }
   },
   price: {
     type: Number,

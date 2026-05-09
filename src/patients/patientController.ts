@@ -54,6 +54,15 @@ export async function updatePatient(req: Request, res: Response) {
 
 export async function deletePatient(req: Request, res: Response) {
   try {
+    const patient = await Patient.deleteOne({ name: req.body.name });
+    res.send(patient);
+  } catch (error) {
+    res.status(400).send(error);
+  }
+}
+
+export async function deletePatientById(req: Request, res: Response) {
+  try {
     const patient = await Patient.findByIdAndDelete(req.params.id);
 
     if (!patient) {
