@@ -351,3 +351,123 @@ describe('Medications API', () => {
       .expect(400);
   });
 });
+
+const baseInvalidMedicationData = {
+  name: {
+    comercialName: `Medication ${patientCounter}`,
+    activeIngredientName: `Active Ingredient ${patientCounter}`
+  },
+  nationalCode: getNationalCode(patientCounter),
+  dosageForm: 'Comprimido',
+  standarDose: {
+    amount: 500,
+    unit: 'mg'
+  },
+  channel: 'Oral',
+  stock: 100,
+  price: 19.99,
+  prescription: true,
+  expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+  contraindications: ['Allergy to active ingredient']
+};
+
+describe('Medications Model Validation', () => {
+  let invalidMedicationData: typeof baseInvalidMedicationData;
+
+  beforeAll(async () => {
+    await connectDB();
+  });
+
+  beforeEach(() => {
+    invalidMedicationData = structuredClone(baseInvalidMedicationData);
+  });
+
+  afterAll(async () => {
+    await disconnectDB();
+  });
+
+  test("should throw new error with invalid national code", async () => {
+    invalidMedicationData.nationalCode = 'ABC123';
+
+    await request(app)
+      .post('/medications')
+      .send(invalidMedicationData)
+      .expect(400)
+      .expect((response: { body: { errors?: { nationalCode?: { message: string } } } }) => {
+        expect(response.body.errors?.nationalCode?.message)
+          .toContain('National code must be numeric');
+      });
+
+    invalidMedicationData.nationalCode = '123';
+
+    await request(app)
+      .post('/medications')
+      .send(invalidMedicationData)
+      .expect(400)
+      .expect((response: { body: { errors?: { nationalCode?: { message: string } } } }) => {
+        expect(response.body.errors?.nationalCode?.message)
+          .toContain('Path `nationalCode` (`123`, length 3) is shorter than the minimum allowed length (6).');
+      });
+
+    invalidMedicationData.nationalCode = '1234567';
+
+    await request(app)
+      .post('/medications')
+      .send(invalidMedicationData)
+      .expect(400)
+      .expect((response: { body: { errors?: { nationalCode?: { message: string } } } }) => {
+        expect(response.body.errors?.nationalCode?.message)
+          .toContain('Path `nationalCode` (`1234567`, length 7) is longer than the maximum allowed length (6).');
+      });
+  });
+
+  test("should throw new error whit invalid dosage form", async () => {
+    invalidMedicationData.dosageForm = 'InvalidDosageForm';
+
+    await request(app)
+      .post('/medications')
+      .send(invalidMedicationData)
+      .expect(400)
+      .expect((response: { body: { errors?: { dosageForm?: { message: string } } } }) => {
+        expect(response.body.errors?.dosageForm?.message)
+          .toContain('Dosage form must be one of: Comprimido, Cápsula, Solución oral, Solución inyectable, Pomada, Parche transdérmico, Inhalador, Otro');
+      });
+  });
+
+  test("should throw new error whit invalid administration channel", async () => {
+    invalidMedicationData.channel = 'InvalidChannel';
+
+    await request(app)
+      .post('/medications')
+      .send(invalidMedicationData)
+      .expect(400)
+      .expect((response: { body: { errors?: { channel?: { message: string } } } }) => {
+        expect(response.body.errors?.channel?.message)
+          .toContain('Administration channel must be one of: Oral, Intravenosa, Intramuscular, Subcutánea, Tópica, Inhalatoria');
+      });
+  });
+
+  test("should throw new error whit negative stock", async () => {
+    invalidMedicationData.stock = -10;
+
+    await request(app)
+      .post('/medications')
+      .send(invalidMedicationData)
+      .expect(400)
+      .expect((response: { body: { errors?: { stock?: { message: string } } } }) => {
+        expect(response.body.errors?.stock?.message)
+          .toContain('Path `stock` (-10) is less than minimum allowed value (0).');
+      });
+
+    invalidMedicationData.stock = 3.5;
+
+    await request(app)
+      .post('/medications')
+      .send(invalidMedicationData)
+      .expect(400)
+      .expect((response: { body: { errors?: { stock?: { message: string } } } }) => {
+        expect(response.body.errors?.stock?.message)
+          .toContain('Stock must be an integer');
+      });
+  });
+});
