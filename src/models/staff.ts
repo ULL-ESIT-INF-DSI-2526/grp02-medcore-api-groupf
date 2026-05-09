@@ -1,5 +1,6 @@
 import { Document, Schema, model } from 'mongoose';
 import { ContactDocument, ContactSchema } from '../schema/contact.js';
+import validator from 'validator';
 
 // Especialidades médicas - El equipo puede ampliar este enum según sea necesario
 export enum MedicalSpecialty {
@@ -53,6 +54,8 @@ export interface StaffDocument extends Document {
   professionalCategory: ProfessionalCategory;
   workShift: WorkShift;
   status: StaffStatus;
+  consultNumber: string;
+  yearsOfExperience: number;
   contactInfo: ContactDocument;
   createdAt: Date;
   updatedAt: Date;
@@ -68,7 +71,12 @@ const StaffSchema = new Schema<StaffDocument>({
     type: String,
     required: true,
     unique: true,
-    trim: true
+    trim: true,
+    validate: (value: string) => {
+      if (!validator.isAlphanumeric(value)) {
+        throw new Error('College ID must be alphanumeric');
+      }
+    }
   },
   medicalSpecialty: {
     type: String,
@@ -114,10 +122,25 @@ const StaffSchema = new Schema<StaffDocument>({
       }
     }
   },
+  consultNumber: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  yearsOfExperience: {
+    type: Number,
+    required: true,
+    min: 0,
+    validator: (value: number) => {
+      if (!Number.isInteger(value)) {
+        throw new Error('Years of experience must be an integer');
+      }
+    }
+  },
   contactInfo: {
     type: ContactSchema,
     trim: true
-   },
+  },
   createdAt: {
     type: Date,
     default: Date.now
