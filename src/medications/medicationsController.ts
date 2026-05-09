@@ -70,3 +70,12 @@ export async function deleteMedicationById(req: Request, res: Response) {
     res.status(400).send(error);
   }
 } 
+
+export async function deleteAllMedications(req: Request, res: Response) {
+  try {
+    const result = await Medications.deleteMany({});
+    res.send({ message: `${result.deletedCount} medications deleted successfully` });
+  } catch (error) {
+    res.status(400).send(error);
+  }
+}

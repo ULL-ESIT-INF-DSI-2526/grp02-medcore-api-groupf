@@ -115,7 +115,7 @@ const MedicationsSchema = new Schema<MedicationsDocument>({
     type: Number,
     required: true,
     min: 0,
-    validator: (value: number) => {
+    validate: (value: number) => {
       if (!Number.isInteger(value)) {
         throw new Error('Stock must be an integer');
       }

@@ -5,7 +5,8 @@ import {
   deleteMedicationById,
   getAllMedications,
   getMedicationByCode,
-  updateMedication
+  updateMedication,
+  deleteAllMedications
 } from './medicationsController.js';
   
 export const MedicationsRouter = express.Router();
@@ -17,3 +18,4 @@ MedicationsRouter.patch('/medications/:id', updateMedication);
 MedicationsRouter.put('/medications/:id', updateMedication);
 MedicationsRouter.delete('/medications', deleteMedication);
 MedicationsRouter.delete('/medications/:id', deleteMedicationById);
+MedicationsRouter.delete('/medications/all', deleteAllMedications);
