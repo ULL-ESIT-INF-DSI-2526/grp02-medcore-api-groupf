@@ -1,17 +1,49 @@
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const modelMocks = vi.hoisted(() => ({
-  createRecord: vi.fn(),
-  getRecords: vi.fn(),
-  findRecordsById: vi.fn(),
-  updateRecordsByID: vi.fn(),
-  deleteRecord: vi.fn()
+const recordModelMock = vi.hoisted(() => ({
+  create: vi.fn(),
+  find: vi.fn(),
+  findById: vi.fn(),
+  findByIdAndUpdate: vi.fn(),
+  findByIdAndDelete: vi.fn()
 }));
 
-vi.mock('../src/models/records.js', () => modelMocks);
+const patientModelMock = vi.hoisted(() => ({
+  findOne: vi.fn(),
+  findById: vi.fn()
+}));
 
-import app from '../src/app.js';
+const staffModelMock = vi.hoisted(() => ({
+  findOne: vi.fn(),
+  findById: vi.fn()
+}));
+
+const medicationModelMock = vi.hoisted(() => ({
+  findOne: vi.fn(),
+  findById: vi.fn()
+}));
+
+vi.mock('../src/models/records.js', () => ({
+  RecordsModel: recordModelMock,
+  Status: { OPEN: 'abierto' },
+  StaffStatus: { ACTIVE: 'activo' }
+}));
+
+vi.mock('../src/models/patient.js', () => ({
+  Patient: patientModelMock
+}));
+
+vi.mock('../src/models/staff.js', () => ({
+  Staff: staffModelMock,
+  StaffStatus: { ACTIVE: 'activo' }
+}));
+
+vi.mock('../src/models/medications.js', () => ({
+  Medications: medicationModelMock
+}));
+
+import { app } from '../src/app.js';
 
 describe('records routes', () => {
   beforeEach(() => {
@@ -19,11 +51,19 @@ describe('records routes', () => {
   });
 
   it('creates a record', async () => {
-    modelMocks.createRecord.mockResolvedValueOnce({ _id: 'record-1', reason: 'Checkup' });
+    const mockRecord = { 
+      _id: 'record-1', 
+      reason: 'Checkup',
+      toObject: () => ({ _id: 'record-1', reason: 'Checkup' })
+    };
+
+    patientModelMock.findOne.mockResolvedValueOnce({ _id: 'patient-1' });
+    staffModelMock.findOne.mockResolvedValueOnce({ _id: 'staff-1' });
+    recordModelMock.create.mockResolvedValueOnce(mockRecord);
 
     const response = await request(app).post('/records').send({
-      patientId: 'patient-1',
-      staffId: 'staff-1',
+      patientIdentificationNumber: 'P123',
+      staffCollegeId: 'S456',
       record: 'Consulta Ambulatoria',
       reason: 'Checkup',
       diagnosis: 'Healthy',
@@ -33,11 +73,13 @@ describe('records routes', () => {
 
     expect(response.status).toBe(201);
     expect(response.body._id).toBe('record-1');
-    expect(modelMocks.createRecord).toHaveBeenCalledTimes(1);
+    expect(recordModelMock.create).toHaveBeenCalledTimes(1);
   });
 
   it('lists records', async () => {
-    modelMocks.getRecords.mockResolvedValueOnce([{ _id: 'record-1' }]);
+    recordModelMock.find.mockReturnValueOnce({
+      lean: vi.fn().mockResolvedValueOnce([{ _id: 'record-1' }])
+    });
 
     const response = await request(app).get('/records');
 
@@ -46,7 +88,9 @@ describe('records routes', () => {
   });
 
   it('returns 404 when a record is missing', async () => {
-    modelMocks.findRecordsById.mockResolvedValueOnce(null);
+    recordModelMock.findById.mockReturnValueOnce({
+      lean: vi.fn().mockResolvedValueOnce(null)
+    });
 
     const response = await request(app).get('/records/missing-id');
 
