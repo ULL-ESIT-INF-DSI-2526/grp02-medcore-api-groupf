@@ -9,9 +9,12 @@ import {
 
 export const RecordsRouter = express.Router();
 
-RecordsRouter.post('/records', createRecords);
-RecordsRouter.get('/records', getAllRecords);
-RecordsRouter.get('/records/:id', getRecordById);
-RecordsRouter.patch('/records/:id', updateRecord);
-RecordsRouter.put('/records/:id', updateRecord);
-RecordsRouter.delete('/records/:id', deleteRecordById);
+RecordsRouter.route('/records')
+  .post(createRecords)
+  .get(getAllRecords);
+
+RecordsRouter.route('/records/:id')
+  .get(getRecordById)
+  .patch(updateRecord)
+  .put(updateRecord)
+  .delete(deleteRecordById);
