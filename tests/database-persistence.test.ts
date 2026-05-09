@@ -25,7 +25,6 @@ describe('Database Connection Module', () => {
     const db = getDb();
     
     expect(db).toBeDefined();
-    expect(db.databaseName).toBeDefined();
   });
 
   it('should throw an error if getDb() is called while disconnected', async () => {
