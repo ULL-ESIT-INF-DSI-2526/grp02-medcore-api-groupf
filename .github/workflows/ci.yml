@@ -1,0 +1,41 @@
+name: CI Tests
+
+on:
+  push:
+    branches: ['main', 'dev']
+  pull_request:
+    branches: ['main']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      ATLAS_URI: ${{ secrets.ATLAS_URI }}
+
+    strategy:
+      matrix:
+        node-version: [20.x, 22.x, 24.x, 25.x]
+        mongodb-version: ['6.0', '7.0', '8.0']
+
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v6
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Start MongoDB
+        uses: supercharge/mongodb-github-action@1.12.1
+        with:
+          mongodb-version: ${{ matrix.mongodb-version }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Running tests
+        env:
+          ATLAS_URI: mongodb://localhost:27017/bdd_test
+        run: npm test
