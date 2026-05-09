@@ -72,18 +72,8 @@ describe('Medications API', () => {
         comercialName: `Medication ${patientCounter}`,
         activeIngredientName: `Active Ingredient ${patientCounter}`
       },
-      nationalCode: getNationalCode(patientCounter),
-      dosageForm: 'Comprimido',
-      standarDose: {
-        amount: 500,
-        unit: 'mg'
-      },
-      channel: 'Oral',
-      stock: 100,
-      price: 19.99,
-      prescription: true,
-      expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-      contraindications: ['Allergy to active ingredient']
+      nationalCode: 'INVALID',
+      dosageForm: 'Comprimido'
     };
 
     await request(app)
