@@ -52,6 +52,17 @@ export async function findStaffById(req: Request, res: Response) {
 
 export async function deleteStaff(req: Request, res: Response) {
   try {
+    const fullName = req.body?.fullName;
+    const filter = fullName ? { fullName } : {};
+    const result = await Staff.deleteMany(filter);
+    res.send(result);
+  } catch (error) {
+    res.status(400).send(error);
+  }
+}
+
+export async function deleteStaffById(req: Request, res: Response) {
+  try {
     const staff = await Staff.findByIdAndDelete(req.params.id);
     if (!staff) {
       return res.status(404).send({ message: 'Staff not found' });

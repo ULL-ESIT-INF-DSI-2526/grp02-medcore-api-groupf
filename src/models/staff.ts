@@ -72,9 +72,11 @@ const StaffSchema = new Schema<StaffDocument>({
     required: true,
     unique: true,
     trim: true,
+    minlength: 9,
+    maxlength: 9,
     validate: (value: string) => {
-      if (!validator.isAlphanumeric(value)) {
-        throw new Error('College ID must be alphanumeric');
+      if (!validator.isNumeric(value)) {
+        throw new Error('College ID must be numeric');
       }
     }
   },
