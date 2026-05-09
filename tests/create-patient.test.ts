@@ -1,8 +1,8 @@
 import { ObjectId } from 'mongodb';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createPatient } from '../patients/patientController.js';
-import { Patient } from '../models/patient.js';
+import { createPatient } from '../src/patients/patientController.js';
+import { Patient } from '../src/models/patient.js';
 
 describe('create patient', () => {
   beforeEach(() => {

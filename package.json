@@ -10,7 +10,7 @@
     "local": "tsc-watch --onSuccess \"env-cmd -f ./config/test.env node dist/index.js\"",
     "db:test": "docker compose -f ./docker-compose.test.yml up -d",
     "db:test:down": "docker compose -f ./docker-compose.test.yml down -v",
-    "coverage": "env-cmd -f ./config/test.env vitest run --coverage --coverage.include **/src/*",
+    "coverage": "env-cmd -f ./config/test.env vitest run tests/ --coverage --coverage.include **/src/*",
     "prettier": "prettier --write .",
     "lint": "eslint . --ext .ts"
   },

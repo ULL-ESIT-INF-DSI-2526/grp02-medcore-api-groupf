@@ -49,3 +49,15 @@ export async function findStaffById(req: Request, res: Response) {
     res.status(400).send(error);
   }
 }
+
+export async function deleteStaff(req: Request, res: Response) {
+  try {
+    const staff = await Staff.findByIdAndDelete(req.params.id);
+    if (!staff) {
+      return res.status(404).send({ message: 'Staff not found' });
+    }
+    res.send({ message: 'Staff deleted successfully' });
+  } catch (error) {
+    res.status(400).send(error);
+  }
+}

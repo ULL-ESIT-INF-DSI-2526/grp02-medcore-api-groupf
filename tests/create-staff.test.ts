@@ -1,13 +1,13 @@
 import { ObjectId } from 'mongodb';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createStaff } from '../staff/staffController.js';
+import { createStaff } from '../src/staff/staffController.js';
 import {
   MedicalSpecialty,
   ProfessionalCategory,
   StaffStatus,
   WorkShift,
   Staff,
-} from '../models/staff.js';
+} from '../src/models/staff.js';
 
 describe('create staff', () => {
   beforeEach(() => {

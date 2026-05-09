@@ -9,9 +9,9 @@ const modelMocks = vi.hoisted(() => ({
   deleteRecord: vi.fn()
 }));
 
-vi.mock('../models/records.js', () => modelMocks);
+vi.mock('../src/models/records.js', () => modelMocks);
 
-import app from '../app.js';
+import app from '../src/app.js';
 
 describe('records routes', () => {
   beforeEach(() => {

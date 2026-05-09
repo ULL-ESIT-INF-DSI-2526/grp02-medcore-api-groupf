@@ -38,7 +38,7 @@ export async function updateMedication(req: Request, res: Response) {
   }
 }
 
-export async function findMedicationByCode(req: Request, res: Response) {
+export async function getMedicationByCode(req: Request, res: Response) {
   try {
     const medication = await Medications.findOne({ nationalCode: req.params.nationalCode });
     if (!medication) {
@@ -51,7 +51,7 @@ export async function findMedicationByCode(req: Request, res: Response) {
 }
 
 
-export async function erraseMedication(req: Request, res: Response) {
+export async function deleteMedication(req: Request, res: Response) {
   try {
     const medication = await Medications.findByIdAndDelete(req.params.id);
     if (!medication) {
