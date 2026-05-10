@@ -10,12 +10,12 @@ import {
 
 export const PatientRouter = express.Router();
 
-PatientRouter.post('/patients', createPatient);
-PatientRouter.get('/patients', getPatients);
-PatientRouter.get('/patients/:id', getPatientById);
-PatientRouter.patch('/patients/:id', updatePatient);
-PatientRouter.put('/patients/:id', updatePatient);
-PatientRouter.delete('/patients', deletePatient);
-PatientRouter.delete('/patients/:id', deletePatientById);
+PatientRouter.post('/', createPatient);
+PatientRouter.get('/', getPatients);
+PatientRouter.get('/:id', getPatientById);
+PatientRouter.patch('/:id', updatePatient);
+PatientRouter.put('/:id', updatePatient);
+PatientRouter.delete('/', deletePatient);
+PatientRouter.delete('/:id', deletePatientById);
 
 

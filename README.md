@@ -22,3 +22,6 @@ npm run db:test
 ```bash
 npm run local
 ```
+
+## Enlace Render
+[text](https://grp02-medcore-api-groupf-1.onrender.com)

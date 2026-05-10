@@ -9,11 +9,11 @@ import {
 
 export const RecordsRouter = express.Router();
 
-RecordsRouter.route('/records')
+RecordsRouter.route('/')
   .post(createRecords)
   .get(getAllRecords);
 
-RecordsRouter.route('/records/:id')
+RecordsRouter.route('/:id')
   .get(getRecordById)
   .patch(updateRecord)
   .put(updateRecord)

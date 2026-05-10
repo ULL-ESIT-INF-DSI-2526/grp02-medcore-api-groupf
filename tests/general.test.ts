@@ -4,10 +4,13 @@ import { app } from '../src/app.js';
 import { connectDB, disconnectDB } from '../src/db/database.js';
 
 describe('Default Router', () => {
-  test('should return 501 for undefined routes', async () => {
+  test('should return 404 for undefined routes', async () => {
     await request(app)
       .get('/undefined-route')
-      .expect(501);
+      .expect(404)
+      .expect((response) => {
+        expect(response.body.message).toBe('Route not found');
+      });
   });
 });
 

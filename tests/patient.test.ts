@@ -43,10 +43,8 @@ describe('Patient API', () => {
   })
 
   afterAll(async () => {
-    await request(app)
-      .delete(`/patients/`)
-      .expect(200);
-
+    // Clean up any remaining patients directly via the model to avoid relying on HTTP
+    await Patient.deleteMany({});
     await disconnectDB();
   });
 
@@ -60,7 +58,7 @@ describe('Patient API', () => {
       });
   });
 
-  test("should try create a new patient and catch status error 400", async () => {
+  test("should try create a new patient and catch status error 409", async () => {
     const invalidPatientData = {
       fullName: `Patient ${patientCounter + 1}`,
       dateOfBirth: '1990-01-01',
@@ -80,7 +78,7 @@ describe('Patient API', () => {
     await request(app)
       .post('/patients')
       .send(invalidPatientData)
-      .expect(400);
+      .expect(409);
   });
 
   test("should get all patients", async () => {
@@ -119,7 +117,7 @@ describe('Patient API', () => {
 
     await request(app)
       .get('/patients')
-      .expect(400);
+      .expect(500);
   });
 
   test("should try get a patient by id and catch status error 404", async () => {
@@ -213,8 +211,7 @@ describe('Patient API', () => {
   });
 
   test("should try delete all patients and catch status error 400", async () => {
-    vi.spyOn(Patient, 'deleteMany').mockRejectedValueOnce(new Error('Database error'));
-
+    // When no filter is provided, the endpoint should reject to avoid mass deletion
     await request(app)
       .delete('/patients')
       .expect(400);

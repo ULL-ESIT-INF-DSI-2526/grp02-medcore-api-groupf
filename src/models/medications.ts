@@ -1,6 +1,9 @@
 import { Document, Schema, model } from 'mongoose';
 import validator from 'validator';
 
+/**
+ * Farmaceutic form of the doses
+ */
 enum DosageForm {
   TABLET = "Comprimido",
   CAPSULE = "Cápsula",
@@ -11,7 +14,9 @@ enum DosageForm {
   INHALER = "Inhalador",
   OTHER = "Otro"
 }
-
+/**
+ * Administration routes for a medication
+ */
 enum AdministrationChannel {
   ORAL = "Oral",
   INTRAVENOUS = "Intravenosa",
@@ -21,40 +26,100 @@ enum AdministrationChannel {
   INHALATION = "Inhalatoria"
 }
 
+/**
+ * Represents the brand names of a medication
+ */
 export interface MedicationName {
+  /**
+   * Commercial name of the medication
+   */
   comercialName: string;
+  /**
+   * Active Ingredicent Name of the medication
+   */
   activeIngredientName: string;
 }
-
+/**
+ * Represents the standard prescrcibed dose
+ * 
+ */
 export interface Dose {
+  /**
+   * Number of doses
+   */
   amount: number
+  /**
+   * Unit of measurement for the dose (mg, g, ml)
+   */
   unit: string;
 }
 
+/**
+ * Represents medication document
+ */
 export interface MedicationsDocument extends Document {
+  /**
+   * Brand names of the medication
+   */
   name: MedicationName;
-  nationalCode: string; // unico en el sistema
+  /**
+   * National Code of the medication
+   * @remarks Must be unique
+   */
+  nationalCode: string;
+  /**
+   * Farmaceutic form of the dose
+   */
   dosageForm: DosageForm;
+  /**
+   * Standard prescribed dose for the medication
+   */
   standarDose: Dose;
+  /**
+   * Route of administration
+   */
   channel: AdministrationChannel;
+  /**
+   * Current number of units available
+   */
   stock: number;
+  /**
+   * Price of the medication
+   */
   price: number;
+  /**
+   * Whether the medication requires a medical prescription
+   */
   prescription: boolean;
+  /**
+   * Date after which the medication should not be used
+   */
   expiryDate: Date;
+  /**
+   * List of known contraindications for this medication
+   */
   contraindications: string[];
+  /**
+   * Marks when was created the document
+   */
   createdAt: Date;
+  /**
+   * Marks when was updated the document
+   */
   updatedAt: Date;
 }
 
 const MedicationsSchema = new Schema<MedicationsDocument>({
   name: {
     type: {
+      /** Trimmed, min lenght 3 */
       comercialName: {
         type: String,
         required: true,
         trim: true,
         minlength: 3
       },
+      /** Trimmed, min lenght 3 */
       activeIngredientName: {
         type: String,
         required: true,
@@ -64,6 +129,10 @@ const MedicationsSchema = new Schema<MedicationsDocument>({
      },
     required: true,
   },
+  /**
+   * 6 numeric digits. Must be unique.
+   * Valitated by 'validator.isNumeric'
+   */
   nationalCode: {
     type: String,
     required: true,
@@ -77,6 +146,9 @@ const MedicationsSchema = new Schema<MedicationsDocument>({
       }
     }
   },
+  /**
+   * Rejects if the string does not have any known form 
+   */
   dosageForm: {
     type: String,
     required: true,
@@ -89,6 +161,7 @@ const MedicationsSchema = new Schema<MedicationsDocument>({
     }
   },
   standarDose: {
+    /**min 0 */
     amount: {
       type: Number,
       required: true,
@@ -100,6 +173,9 @@ const MedicationsSchema = new Schema<MedicationsDocument>({
       trim: true
     }
   },
+  /**
+   * Rejects if the string does not have any known channel 
+   */
   channel: {
     type: String,
     required: true,
@@ -111,6 +187,10 @@ const MedicationsSchema = new Schema<MedicationsDocument>({
       }
     }
   },
+
+  /**
+   * Must be a non-negative integer
+   */
   stock: {
     type: Number,
     required: true,
@@ -121,6 +201,7 @@ const MedicationsSchema = new Schema<MedicationsDocument>({
       }
     }
   },
+  /**min 0 */
   price: {
     type: Number,
     required: true,
@@ -130,6 +211,10 @@ const MedicationsSchema = new Schema<MedicationsDocument>({
     type: Boolean,
     required: true
   },
+  /**
+   * Must be a future date, today is valid.
+   * 
+   */
   expiryDate: {
     type: Date,
     required: true,
@@ -138,15 +223,24 @@ const MedicationsSchema = new Schema<MedicationsDocument>({
       message: 'Expiry date must be in the future'
     }
   },
+  /**
+   * List of contraindication descriptions. Required, may be an empty array.
+   */
   contraindications: {
     type: [String],
     required: true,
     trim: true
   },
+  /**
+   * Marks when the document was created
+   */
   createdAt: {
     type: Date,
     default: Date.now
   },
+  /**
+   * Marks when the document was updated
+   */
   updatedAt: {
     type: Date,
     default: Date.now

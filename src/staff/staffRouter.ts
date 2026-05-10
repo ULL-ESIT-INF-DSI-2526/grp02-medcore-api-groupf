@@ -3,10 +3,10 @@ import { createStaff, findStaffById, getAllStaff, updateStaff, deleteStaff, dele
 
 export const StaffRouter = express.Router();
 
-StaffRouter.post('/staff', createStaff);
-StaffRouter.get('/staff', getAllStaff);
-StaffRouter.get('/staff/:id', findStaffById);
-StaffRouter.patch('/staff/:id', updateStaff);
-StaffRouter.put('/staff/:id', updateStaff);
-StaffRouter.delete('/staff', deleteStaff);
-StaffRouter.delete('/staff/:id', deleteStaffById); 
+StaffRouter.post('/', createStaff);
+StaffRouter.get('/', getAllStaff);
+StaffRouter.get('/:id', findStaffById);
+StaffRouter.patch('/:id', updateStaff);
+StaffRouter.put('/:id', updateStaff);
+StaffRouter.delete('/', deleteStaff);
+StaffRouter.delete('/:id', deleteStaffById);

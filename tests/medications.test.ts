@@ -140,7 +140,7 @@ describe('Medications API', () => {
 
     await request(app)
       .get('/medications/all')
-      .expect(400);
+      .expect(500);
   });
 
   test("should try get a medication by id and catch status error 404", async () => {
@@ -167,7 +167,7 @@ describe('Medications API', () => {
 
     await request(app)
       .get('/medications/code/123456')
-      .expect(400);
+      .expect(500);
   });
 
   test("should update a medication", async () => {
@@ -268,7 +268,7 @@ describe('Medications API', () => {
 
     await request(app)
       .delete(`/medications/name/${encodeURIComponent(`Medication ${patientCounter}`)}`)
-      .expect(400);
+      .expect(500);
   });
 
   test("should try delete a medication by name and catch status error 404", async () => {
@@ -305,7 +305,7 @@ describe('Medications API', () => {
 
     await request(app)
       .delete(`/medications/name/${encodeURIComponent(`Medication ${patientCounter}`)}`)
-      .expect(400);
+      .expect(500);
   });
 
   test("should try delete all medications and catch status error 400", async () => {
@@ -313,7 +313,7 @@ describe('Medications API', () => {
 
     await request(app)
       .delete('/medications')
-      .expect(400);
+      .expect(500);
   });
 
   test("should delete a medication by id", async () => {

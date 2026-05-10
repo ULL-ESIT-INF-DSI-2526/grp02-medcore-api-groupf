@@ -1,22 +1,23 @@
 import { Request, Response } from 'express';
 import { Staff } from '../models/staff.js';
+import { sendErrorResponse } from '../utils/http.js';
 
 export async function createStaff(req: Request, res: Response) {
   try{
     const staff = new Staff(req.body);
     const savedStaff = await staff.save();
-    res.status(201).send(savedStaff);
+    return res.status(201).send(savedStaff);
   } catch (error){
-    res.status(400).send(error);
+    sendErrorResponse(res, error);
   }
 }
 
 export async function getAllStaff(req: Request, res: Response){
   try{
     const staff = await Staff.find();
-    res.send(staff);
+    return res.status(200).send(staff);
   }catch (error){
-    res.status(400).send(error);
+    sendErrorResponse(res, error);
   }
 }
 
@@ -32,9 +33,9 @@ export async function updateStaff(req: Request, res: Response) {
       return res.status(404).send({ message: 'Staff not found' });
     }
 
-    res.send(staff);
+    return res.status(200).send(staff);
   } catch (error) {
-    res.status(400).send(error);
+    sendErrorResponse(res, error);
   }
 }
 
@@ -44,9 +45,9 @@ export async function findStaffById(req: Request, res: Response) {
     if (!staff) {
       return res.status(404).send({ message: 'Staff not found' });
     }
-    res.send(staff);
+    return res.status(200).send(staff);
   } catch (error) {
-    res.status(400).send(error);
+    sendErrorResponse(res, error);
   }
 }
 
@@ -55,9 +56,9 @@ export async function deleteStaff(req: Request, res: Response) {
     const fullName = req.body?.fullName;
     const filter = fullName ? { fullName } : {};
     const result = await Staff.deleteMany(filter);
-    res.send(result);
+    return res.status(200).send(result);
   } catch (error) {
-    res.status(400).send(error);
+    sendErrorResponse(res, error);
   }
 }
 
@@ -67,8 +68,8 @@ export async function deleteStaffById(req: Request, res: Response) {
     if (!staff) {
       return res.status(404).send({ message: 'Staff not found' });
     }
-    res.send({ message: 'Staff deleted successfully' });
+    return res.status(200).send({ message: 'Staff deleted successfully' });
   } catch (error) {
-    res.status(400).send(error);
+    sendErrorResponse(res, error);
   }
 }

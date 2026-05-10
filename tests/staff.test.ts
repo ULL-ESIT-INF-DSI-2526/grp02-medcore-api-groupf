@@ -123,7 +123,7 @@ describe('Staff API', () => {
 
     await request(app)
       .get('/staff')
-      .expect(400);
+      .expect(500);
   });
 
   test("should try get a staff member by id and catch status error 404", async () => {
@@ -232,7 +232,7 @@ describe('Staff API', () => {
 
     await request(app)
       .delete('/staff')
-      .expect(400);
+      .expect(500);
   })
 
   test("should delete a staff member by id", async () => {

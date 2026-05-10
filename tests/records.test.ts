@@ -58,7 +58,7 @@ describe('records routes', () => {
     };
 
     patientModelMock.findOne.mockResolvedValueOnce({ _id: 'patient-1' });
-    staffModelMock.findOne.mockResolvedValueOnce({ _id: 'staff-1' });
+    staffModelMock.findOne.mockResolvedValueOnce({ _id: 'staff-1', status: 'activo' });
     recordModelMock.create.mockResolvedValueOnce(mockRecord);
 
     const response = await request(app).post('/records').send({

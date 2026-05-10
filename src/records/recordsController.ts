@@ -13,13 +13,21 @@ import { Patient } from '../models/patient.js';
 import { Staff, StaffStatus } from '../models/staff.js';
 import { Medications } from '../models/medications.js';
 import { Types } from 'mongoose';
+import { HttpError, sendErrorResponse } from '../utils/http.js';
 
+/**
+ * Resolved Prescription Item
+ */
 interface PrescriptionResolvedItem {
   medication: { _id: Types.ObjectId; price: number; stock: number; save: () => Promise<unknown> };
   quantity: number;
   dosage?: string;
 }
-
+/**
+ * Calculates the total cost of a resolved prescription
+ * @param prescription - List of resolved prescription items.
+ * @returns Total price as the sum of 'quantity * medication.price' for each items.
+ */
 async function calculateResolvedPrescriptionTotal(
   prescription: PrescriptionResolvedItem[]
 ): Promise<number> {
@@ -31,7 +39,11 @@ async function calculateResolvedPrescriptionTotal(
 
   return total;
 }
-
+/**
+ * Converts a list of resolved presccription items into the shape
+ * @param prescription - List of resolved prescription items.
+ * @returns Normalized array ready to be stored in the 'prescription' field of a record.
+ */
 function normalizeResolvedPrescription(
   prescription: PrescriptionResolvedItem[]
 ): PrescriptionMedications[] {
@@ -41,7 +53,16 @@ function normalizeResolvedPrescription(
     dosage: item.dosage
   }));
 }
-
+/**
+ * Verifies that both staff and patient exist in the databases by 'id's and the staff is active
+ * @param patientIdentificationNumber - National ID or passport number of the patient
+ * @param staffCollegeId - Professional college ID
+ * @returns Resolved '_id' references for patient and staff documents.
+ * 
+ * @throws '404' if the patient or the staff member does not exist.
+ * @throws '409' if the staff member is inactive.
+ * 
+ */
 async function ensureRelatedEntitiesExist(
   patientIdentificationNumber: string,
   staffCollegeId: string
@@ -51,20 +72,33 @@ async function ensureRelatedEntitiesExist(
 }> {
   const [patient, staff] = await Promise.all([
     Patient.findOne({ identificationNumber: patientIdentificationNumber }),
-    Staff.findOne({ collegeId: staffCollegeId, status: StaffStatus.ACTIVE })
+    Staff.findOne({ collegeId: staffCollegeId })
   ]);
 
   if (!patient) {
-    throw new Error('The patient mentioned do not exist');
+    throw new HttpError(404, 'The patient mentioned does not exist');
   }
 
   if (!staff) {
-    throw new Error('The staff mentioned do not exist or is not active');
+    throw new HttpError(404, 'The staff mentioned does not exist');
+  }
+
+  if (staff.status !== StaffStatus.ACTIVE) {
+    throw new HttpError(409, 'The staff mentioned is inactive');
   }
 
   return { patient: patient as { _id: Types.ObjectId }, staff: staff as { _id: Types.ObjectId } };
 }
-
+/**
+ * Verifies that both staff and patient exist in the databases by '_id' and the staff is active
+ * @param patientIdentificationNumber - National ID or passport number of the patient
+ * @param staffCollegeId - Professional college ID
+ * @returns Resolved '_id' references for patient and staff documents.
+ * 
+ * @throws '404' if the patient or the staff member does not exist.
+ * @throws '409' if the staff member is inactive.
+ * 
+ */
 async function ensureRelatedEntitiesExistById(
   patientId: string | Types.ObjectId,
   staffId: string | Types.ObjectId
@@ -75,14 +109,27 @@ async function ensureRelatedEntitiesExistById(
   ]);
 
   if (!patient) {
-    throw new Error('The patient mentioned do not exist');
+    throw new HttpError(404, 'The patient mentioned does not exist');
   }
 
   if (!staff) {
-    throw new Error('The staff mentioned do not exist');
+    throw new HttpError(404, 'The staff mentioned does not exist');
+  }
+
+  if (staff.status !== StaffStatus.ACTIVE) {
+    throw new HttpError(409, 'The staff mentioned is inactive');
   }
 }
-
+/**
+ * Returns and validates each medication in a prescription list
+ * @param prescription - List of prescription inputs from CreateRecordInput.
+ * @returns List of resolved prescription items with full medication references.
+ * 
+ * @throws '400' if any item is missing 'nationalCode' or item quantity <= 0.
+ * @throws '404' if any medication does not exist.
+ * @throws '409' if any medication is expired or has insufficient stock.
+ * 
+ */
 async function resolvePrescriptionItems(
   prescription: PrescriptionInput[]
 ): Promise<PrescriptionResolvedItem[]> {
@@ -90,20 +137,24 @@ async function resolvePrescriptionItems(
 
   for (const item of prescription) {
     if (!item.nationalCode) {
-      throw new Error('Missing medication national code');
+      throw new HttpError(400, 'Missing medication national code');
     }
 
     if (item.quantity <= 0) {
-      throw new Error('Prescription quantity must be greater than zero');
+      throw new HttpError(400, 'Prescription quantity must be greater than zero');
     }
 
     const medication = await Medications.findOne({ nationalCode: item.nationalCode });
     if (!medication) {
-      throw new Error('The medication mentioned do not exist');
+      throw new HttpError(404, 'The medication mentioned does not exist');
+    }
+
+    if (medication.expiryDate <= new Date()) {
+      throw new HttpError(409, `The medication ${item.nationalCode} is expired`);
     }
 
     if (medication.stock < item.quantity) {
-      throw new Error(`Insufficient stock for medication ${item.nationalCode}`);
+      throw new HttpError(409, `Insufficient stock for medication ${item.nationalCode}`);
     }
 
     resolvedItems.push({
@@ -115,14 +166,27 @@ async function resolvePrescriptionItems(
 
   return resolvedItems;
 }
-
+/**
+ * Deducts the prescribed quantity from each medication's stock and persists the change.
+ * @param prescription - List of prescription inputs from resolvePrescriptionItems.
+ * 
+ */
 async function deductPrescriptionStock(prescription: PrescriptionResolvedItem[]): Promise<void> {
   for (const item of prescription) {
     item.medication.stock -= item.quantity;
     await item.medication.save();
   }
 }
-
+/**
+ * Creates a new medical record
+ * @param data - Input data (CreateRecordInput)
+ * @returns The persisted Records document.
+ * 
+ * @throws '400' if any required fields is missing.
+ * @throws '404' if patient, staff or any medication does not exist.
+ * @throws '409' if staff is inactive, medication expired or stock insufficient.
+ * 
+ */
 export async function createRecord(data: CreateRecordInput): Promise<Records> {
   if (
     !data.patientIdentificationNumber ||
@@ -132,7 +196,7 @@ export async function createRecord(data: CreateRecordInput): Promise<Records> {
     !data.diagnosis ||
     !data.prescription
   ) {
-    throw new Error('Missing required record fields');
+    throw new HttpError(400, 'Missing required record fields');
   }
 
   const { patient, staff } = await ensureRelatedEntitiesExist(
@@ -159,24 +223,41 @@ export async function createRecord(data: CreateRecordInput): Promise<Records> {
 
   return created.toObject();
 }
-
+/**
+ * Returns all medical records from the database
+ * @returns Array of Records. Empty array if none exist. 
+ */
 export async function getRecords(): Promise<Records[]> {
   return RecordsModel.find().lean();
 }
-
+/**
+ * Returns a medical record by its '_id'
+ * @param id - Records' '_id'
+ * @returns The matching Records document, or null if not found
+ */
 export async function findRecordsById(
   id: string | Types.ObjectId
 ): Promise<Records | null> {
   return RecordsModel.findById(id).lean();
 }
-
+/**
+ * Updates a record by its '_id'
+ * @param id - Records' '_id'
+ * @param data - Fields to update
+ * @returns The updated Records document, or null if not found.
+ * 
+ * @throws '400' if any prescription item has 'quantity <= 0'.
+ * @throws '404' if patient or staff does not exist.
+ * @throws '409' if the referenced staff member is inactive or any medication prescription is expired.
+ * 
+ */
 export async function updateRecordsByID(
   id: string | Types.ObjectId,
   data: UpdateRecordInput
 ): Promise<Records | null> {
   const existingRecord = await RecordsModel.findById(id);
   if (!existingRecord) {
-    throw new Error('Record unavailable');
+    return null;
   }
 
   if (data.patientId || data.staffId) {
@@ -208,11 +289,21 @@ export async function updateRecordsByID(
   await existingRecord.save();
   return existingRecord.toObject();
 }
-
+/**
+ * Deletes a medical record by '_id'
+ * @param id - Records' id
+ * @returns Deleted Records or null.
+ */
 export async function deleteRecord(id: string | Types.ObjectId): Promise<Records | null> {
   return RecordsModel.findByIdAndDelete(id).lean();
 }
-
+/**
+ * Returns Records created between two dates
+ * @param startDate - Start of the date range
+ * @param endDate - End of the date range
+ * @param register - Optional TypeofRecords to further filter results.
+ * @returns Array of matching Records
+ */
 export async function findRecordsByDates(
   startDate: Date,
   endDate: Date,
@@ -228,11 +319,24 @@ export async function findRecordsByDates(
 
   return RecordsModel.find(filter).lean();
 }
-
+/**
+ * Returns all records associated with a patient
+ * @param patient - Patient's id
+ * @returns Array of records 
+ */
 export async function findRecordsByPatient(patient: string): Promise<Records[]> {
   return RecordsModel.find({ patientId: patient }).lean();
 }
-
+/**
+ * Calculates the total price of a prescription.
+ * @param prescription - Prescription array from UpdateRecordInput
+ * @returns Total price calculated
+ * 
+ * @throws '400' if any item has 'quantity' <= 0.
+ * @throws '404' if any medication does not exist.
+ * @throws '409' if any medication is expired.
+ * 
+ */
 async function calculateLegacyPrescriptionTotal(
   prescription: UpdateRecordInput['prescription']
 ): Promise<number> {
@@ -240,12 +344,16 @@ async function calculateLegacyPrescriptionTotal(
 
   for (const item of prescription ?? []) {
     if (item.quantity <= 0) {
-      throw new Error('Prescription quantity must be greater than zero');
+      throw new HttpError(400, 'Prescription quantity must be greater than zero');
     }
 
     const medication = await Medications.findById(item.medicationId);
     if (!medication) {
-      throw new Error('The medication mentioned do not exist');
+      throw new HttpError(404, 'The medication mentioned does not exist');
+    }
+
+    if (medication.expiryDate <= new Date()) {
+      throw new HttpError(409, `The medication ${String(item.medicationId)} is expired`);
     }
 
     total += item.quantity * medication.price;
@@ -268,16 +376,46 @@ export async function createRecords(req: Request, res: Response) {
     const record = await createRecord(req.body);
     return res.status(201).send(record);
   } catch (error) {
-    return res.status(400).send(error);
+    return sendErrorResponse(res, error);
   }
 }
 
-export async function getAllRecords(_req: Request, res: Response) {
+export async function getAllRecords(req: Request, res: Response) {
   try {
-    const records = await getRecords();
-    return res.send(records);
+    const { identificationNumber, startDate, endDate, type } = req.query;
+
+    // Filtra por ID
+    if (identificationNumber) {
+      const patient = await Patient.findOne({ identificationNumber: String(identificationNumber) });
+      if (!patient) {
+        return res.status(404).send({ message: 'Patient not found' });
+      }
+      const records = await findRecordsByPatient(String(patient._id));
+      records.sort((a, b) => new Date(b.admissionDate).getTime() - new Date(a.admissionDate).getTime());
+      return res.status(200).send(records);
+    }
+
+    // Filtra por fechas 
+    if (startDate || endDate) {
+      const start = startDate ? new Date(String(startDate)) : new Date(0);
+      const end = endDate ? new Date(String(endDate)) : new Date();
+
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+        return res.status(400).send({ message: 'Invalid date format. (e.g., 2024-01-01)' });
+      }
+
+      const recordType = type ? String(type) : undefined;
+      const records = await findRecordsByDates(start, end, recordType as TypeofRecord);
+      records.sort((a, b) => new Date(b.admissionDate).getTime() - new Date(a.admissionDate).getTime());
+      return res.status(200).send(records);
+    }
+
+    // Sin filto, devuelve todos los records
+    const allRecords = await getRecords();
+    allRecords.sort((a, b) => new Date(b.admissionDate).getTime() - new Date(a.admissionDate).getTime());
+    return res.status(200).send(allRecords);
   } catch (error) {
-    return res.status(400).send(error);
+    return sendErrorResponse(res, error);
   }
 }
 
@@ -288,9 +426,9 @@ export async function getRecordById(req: Request, res: Response) {
       return res.status(404).send({ message: 'Record not found' });
     }
 
-    return res.send(record);
+    return res.status(200).send(record);
   } catch (error) {
-    return res.status(400).send(error);
+    return sendErrorResponse(res, error);
   }
 }
 
@@ -301,9 +439,9 @@ export async function updateRecord(req: Request, res: Response) {
       return res.status(404).send({ message: 'Record not found' });
     }
 
-    return res.send(record);
+    return res.status(200).send(record);
   } catch (error) {
-    return res.status(400).send(error);
+    return sendErrorResponse(res, error);
   }
 }
 
@@ -314,8 +452,8 @@ export async function deleteRecordById(req: Request, res: Response) {
       return res.status(404).send({ message: 'Record not found' });
     }
 
-    return res.send(record);
+    return res.status(200).send(record);
   } catch (error) {
-    return res.status(400).send(error);
+    return sendErrorResponse(res, error);
   }
 }

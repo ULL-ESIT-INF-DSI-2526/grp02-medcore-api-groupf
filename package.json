@@ -11,6 +11,7 @@
     "db:test": "docker compose -f ./docker-compose.test.yml up -d",
     "db:test:down": "docker compose -f ./docker-compose.test.yml down -v",
     "coverage": "env-cmd -f ./config/test.env vitest run --no-file-parallelism tests/ --coverage --coverage.include **/src/*",
+    "seed:dev": "tsc && env-cmd -f ./config/dev.env node dist/seed.js",
     "prettier": "prettier --write .",
     "lint": "eslint . --ext .ts"
   },
@@ -33,11 +34,13 @@
     "prettier": "^3.8.3",
     "supertest": "^7.2.2",
     "tsc-watch": "^7.2.0",
+    "typedoc": "^0.28.19",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.59.1",
     "vitest": "^4.1.5"
   },
   "dependencies": {
+    "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "mongodb": "^5.7.0",
     "mongoose": "^9.6.1",
