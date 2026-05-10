@@ -289,10 +289,40 @@ export async function createRecords(req: Request, res: Response) {
   }
 }
 
-export async function getAllRecords(_req: Request, res: Response) {
+export async function getAllRecords(req: Request, res: Response) {
   try {
-    const records = await getRecords();
-    return res.send(records);
+    const { identificationNumber, startDate, endDate, type } = req.query;
+
+    // Filtra por ID
+    if (identificationNumber) {
+      const patient = await Patient.findOne({ identificationNumber: String(identificationNumber) });
+      if (!patient) {
+        return res.status(404).send({ message: 'Patient not found' });
+      }
+      const records = await findRecordsByPatient(String(patient._id));
+      records.sort((a, b) => new Date(b.admissionDate).getTime() - new Date(a.admissionDate).getTime());
+      return res.send(records);
+    }
+
+    // Filtra por fechas 
+    if (startDate || endDate) {
+      const start = startDate ? new Date(String(startDate)) : new Date(0);
+      const end = endDate ? new Date(String(endDate)) : new Date();
+
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+        return res.status(400).send({ message: 'Invalid date format. (e.g., 2024-01-01)' });
+      }
+
+      const recordType = type ? String(type) : undefined;
+      const records = await findRecordsByDates(start, end, recordType as TypeofRecord);
+      records.sort((a, b) => new Date(b.admissionDate).getTime() - new Date(a.admissionDate).getTime());
+      return res.send(records);
+    }
+
+    // Sin filto, devuelve todos los records
+    const allRecords = await getRecords();
+    allRecords.sort((a, b) => new Date(b.admissionDate).getTime() - new Date(a.admissionDate).getTime());
+    return res.send(allRecords);
   } catch (error) {
     return sendErrorResponse(res, error);
   }
