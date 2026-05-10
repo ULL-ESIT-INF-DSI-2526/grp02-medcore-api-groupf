@@ -13,6 +13,7 @@ import { Patient } from '../models/patient.js';
 import { Staff, StaffStatus } from '../models/staff.js';
 import { Medications } from '../models/medications.js';
 import { Types } from 'mongoose';
+import { HttpError, sendErrorResponse } from '../utils/http.js';
 
 interface PrescriptionResolvedItem {
   medication: { _id: Types.ObjectId; price: number; stock: number; save: () => Promise<unknown> };
@@ -51,15 +52,19 @@ async function ensureRelatedEntitiesExist(
 }> {
   const [patient, staff] = await Promise.all([
     Patient.findOne({ identificationNumber: patientIdentificationNumber }),
-    Staff.findOne({ collegeId: staffCollegeId, status: StaffStatus.ACTIVE })
+    Staff.findOne({ collegeId: staffCollegeId })
   ]);
 
   if (!patient) {
-    throw new Error('The patient mentioned do not exist');
+    throw new HttpError(404, 'The patient mentioned does not exist');
   }
 
   if (!staff) {
-    throw new Error('The staff mentioned do not exist or is not active');
+    throw new HttpError(404, 'The staff mentioned does not exist');
+  }
+
+  if (staff.status !== StaffStatus.ACTIVE) {
+    throw new HttpError(409, 'The staff mentioned is inactive');
   }
 
   return { patient: patient as { _id: Types.ObjectId }, staff: staff as { _id: Types.ObjectId } };
@@ -75,11 +80,15 @@ async function ensureRelatedEntitiesExistById(
   ]);
 
   if (!patient) {
-    throw new Error('The patient mentioned do not exist');
+    throw new HttpError(404, 'The patient mentioned does not exist');
   }
 
   if (!staff) {
-    throw new Error('The staff mentioned do not exist');
+    throw new HttpError(404, 'The staff mentioned does not exist');
+  }
+
+  if (staff.status !== StaffStatus.ACTIVE) {
+    throw new HttpError(409, 'The staff mentioned is inactive');
   }
 }
 
@@ -90,20 +99,24 @@ async function resolvePrescriptionItems(
 
   for (const item of prescription) {
     if (!item.nationalCode) {
-      throw new Error('Missing medication national code');
+      throw new HttpError(400, 'Missing medication national code');
     }
 
     if (item.quantity <= 0) {
-      throw new Error('Prescription quantity must be greater than zero');
+      throw new HttpError(400, 'Prescription quantity must be greater than zero');
     }
 
     const medication = await Medications.findOne({ nationalCode: item.nationalCode });
     if (!medication) {
-      throw new Error('The medication mentioned do not exist');
+      throw new HttpError(404, 'The medication mentioned does not exist');
+    }
+
+    if (medication.expiryDate <= new Date()) {
+      throw new HttpError(409, `The medication ${item.nationalCode} is expired`);
     }
 
     if (medication.stock < item.quantity) {
-      throw new Error(`Insufficient stock for medication ${item.nationalCode}`);
+      throw new HttpError(409, `Insufficient stock for medication ${item.nationalCode}`);
     }
 
     resolvedItems.push({
@@ -132,7 +145,7 @@ export async function createRecord(data: CreateRecordInput): Promise<Records> {
     !data.diagnosis ||
     !data.prescription
   ) {
-    throw new Error('Missing required record fields');
+    throw new HttpError(400, 'Missing required record fields');
   }
 
   const { patient, staff } = await ensureRelatedEntitiesExist(
@@ -176,7 +189,7 @@ export async function updateRecordsByID(
 ): Promise<Records | null> {
   const existingRecord = await RecordsModel.findById(id);
   if (!existingRecord) {
-    throw new Error('Record unavailable');
+    return null;
   }
 
   if (data.patientId || data.staffId) {
@@ -240,12 +253,16 @@ async function calculateLegacyPrescriptionTotal(
 
   for (const item of prescription ?? []) {
     if (item.quantity <= 0) {
-      throw new Error('Prescription quantity must be greater than zero');
+      throw new HttpError(400, 'Prescription quantity must be greater than zero');
     }
 
     const medication = await Medications.findById(item.medicationId);
     if (!medication) {
-      throw new Error('The medication mentioned do not exist');
+      throw new HttpError(404, 'The medication mentioned does not exist');
+    }
+
+    if (medication.expiryDate <= new Date()) {
+      throw new HttpError(409, `The medication ${String(item.medicationId)} is expired`);
     }
 
     total += item.quantity * medication.price;
@@ -268,7 +285,7 @@ export async function createRecords(req: Request, res: Response) {
     const record = await createRecord(req.body);
     return res.status(201).send(record);
   } catch (error) {
-    return res.status(400).send(error);
+    return sendErrorResponse(res, error);
   }
 }
 
@@ -277,7 +294,7 @@ export async function getAllRecords(_req: Request, res: Response) {
     const records = await getRecords();
     return res.send(records);
   } catch (error) {
-    return res.status(400).send(error);
+    return sendErrorResponse(res, error);
   }
 }
 
@@ -290,7 +307,7 @@ export async function getRecordById(req: Request, res: Response) {
 
     return res.send(record);
   } catch (error) {
-    return res.status(400).send(error);
+    return sendErrorResponse(res, error);
   }
 }
 
@@ -303,7 +320,7 @@ export async function updateRecord(req: Request, res: Response) {
 
     return res.send(record);
   } catch (error) {
-    return res.status(400).send(error);
+    return sendErrorResponse(res, error);
   }
 }
 
@@ -316,6 +333,6 @@ export async function deleteRecordById(req: Request, res: Response) {
 
     return res.send(record);
   } catch (error) {
-    return res.status(400).send(error);
+    return sendErrorResponse(res, error);
   }
 }
