@@ -2,6 +2,9 @@ import { Document, Schema, model } from 'mongoose';
 import { ContactDocument, ContactSchema } from '../schema/contact.js';
 import validator from 'validator';
 
+/**
+ * Valid Blood Groops
+ */
 enum BloodGroup {
   A_POS = 'A+',
   A_NEG = 'A-',
@@ -12,40 +15,88 @@ enum BloodGroup {
   O_POS = '0+',
   O_NEG = '0-'
 }
-
+/**
+ * Valid Genders
+ */
 enum Gender{
   MALE = 'male',
   FEMALE = 'female',
   OTHER = 'other',
   UNKNOWN = 'unknown'
 }
-
+/**
+ * Current status of the patient
+ */
 enum PatientStatus {
   ACTIVE = 'active',
   TEMPORARY_LEAVE = 'temporary_leave',
   DECEASED = 'deceased'
 }
-
+/**
+ * Represents patient document
+ */
 export interface PatientDocument extends Document {
+  /**
+   * Full name of the patient
+   */
   fullName: string;
+  /**
+   * Birth Date of the patient
+   */
   dateOfBirth: Date;
-  identificationNumber: string; // DNI / Passport - unique
-  recordNumber: string; // Social security or clinical record number - unique
+  /**
+   * Identification Number (DNI, Passport).
+   * Must be unique
+   */
+  identificationNumber: string;
+  /**
+   * Social security or clinical record number
+   * Must be unique
+   */
+  recordNumber: string; 
+  /**
+   * Gender of the patient
+   */
   gender: Gender;
+  /**
+   * Patient's contact details
+   */
   contact: ContactDocument;
+  /**
+   * Patient's allergies
+   */
   allergies: string[];
+  /**
+   * Patient's blood group
+   */
   bloodGroup: BloodGroup;
+  /**
+   * Patient's current status
+   */
   status: PatientStatus;
+  /**
+   * Marks when the document was created 
+   */
   createdAt: Date;
+  /**
+   * Marks when the document was updated 
+   */
   updatedAt: Date;
 }
 
 const PatientSchema = new Schema<PatientDocument>({
+  /**
+   * Full legal name of the patient.
+   * Trimmed
+   */
   fullName: { 
     type: String, 
     required: true,
     trim: true
   },
+  /**
+   * Patient's Date of birth
+   */
   dateOfBirth: {
     type: Date,
     required: true,
@@ -54,6 +105,10 @@ const PatientSchema = new Schema<PatientDocument>({
       message: 'Date of birth must be in the past'
     }
   },
+  /**
+   * National ID or passport number of the patient.
+   * Must be unique.
+   */
   identificationNumber: {
     type: String,
     required: true,
@@ -65,6 +120,11 @@ const PatientSchema = new Schema<PatientDocument>({
       }
     }
   },
+  /**
+   * Internal medical record number assigned to the patient.
+   * Must be unique and alphanumeric. 
+   * Validated with `validator.isAlphanumeric`. 
+   */
   recordNumber: {
     type: String,
     required: true,
@@ -76,6 +136,9 @@ const PatientSchema = new Schema<PatientDocument>({
       }
     }
   },
+  /**
+   * Gender of the patient
+   */
   gender: {
     type: String,
     required: true,
@@ -87,15 +150,25 @@ const PatientSchema = new Schema<PatientDocument>({
       }
     }
   },
+  /**
+   * Patient's contact details
+   */
   contact: {
     type: ContactSchema,
     trim: true
   },
+  /**
+   * List of known allergies for the patient.
+   * Defaults to an empty array if not provided.
+   */
   allergies: {
     type: [String],
     default: [],
     trim: true
   },
+  /**
+   * Blood group of the patient
+   */
   bloodGroup: {
     type: String,
     trim: true,
@@ -106,6 +179,9 @@ const PatientSchema = new Schema<PatientDocument>({
       }
     }
   },
+  /**
+   * Current status of the patient
+   */
   status: {
     type: String,
     trim: true,
@@ -116,10 +192,16 @@ const PatientSchema = new Schema<PatientDocument>({
       }
     }
   },
+  /**
+   * Marks when the document was created 
+   */
   createdAt: {
     type: Date,
     default: Date.now
   },
+  /**
+   * Marks when the document was updated 
+   */
   updatedAt: {
     type: Date,
     default: Date.now
