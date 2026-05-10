@@ -60,8 +60,8 @@ const PatientSchema = new Schema<PatientDocument>({
     unique: true,
     trim: true,
     validate: (value: string) => {
-      if(value.length < 5) {
-        throw new Error('Identification number must be at least 5 characters long');
+      if(!validator.isIdentityCard(value, 'any') && !validator.isPassportNumber(value, 'any')) {
+        throw new Error('Identification number must be a valid ID or Passport');
       }
     }
   },

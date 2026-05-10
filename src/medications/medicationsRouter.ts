@@ -12,12 +12,12 @@ import {
   
 export const MedicationsRouter = express.Router();
 
-MedicationsRouter.post('/medications', createMedication);
-MedicationsRouter.get('/medications/all', getAllMedications);
-MedicationsRouter.get('/medications/code/:nationalCode', getMedicationByCode);
-MedicationsRouter.get('/medications/:id', getMedicationById);
-MedicationsRouter.patch('/medications/:id', updateMedication);
-MedicationsRouter.put('/medications/:id', updateMedication);
-MedicationsRouter.delete('/medications/name/:name', deleteMedication);
-MedicationsRouter.delete('/medications/:id', deleteMedicationById);
-MedicationsRouter.delete('/medications', deleteAllMedications);
+  MedicationsRouter.post('/', createMedication);
+  MedicationsRouter.get('/all', getAllMedications);
+  MedicationsRouter.get('/code/:nationalCode', getMedicationByCode);
+  MedicationsRouter.get('/:id', getMedicationById);
+  MedicationsRouter.patch('/:id', updateMedication);
+  MedicationsRouter.put('/:id', updateMedication);
+  MedicationsRouter.delete('/name/:name', deleteMedication);
+  MedicationsRouter.delete('/:id', deleteMedicationById);
+  MedicationsRouter.delete('/', deleteAllMedications);

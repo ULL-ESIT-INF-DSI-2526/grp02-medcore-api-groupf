@@ -14,10 +14,10 @@ app.get('/', (req, res) => {
   res.send('¡API funcionando correctamente!');
 });
 
-app.use(PatientRouter);
-app.use(StaffRouter);
-app.use(MedicationsRouter);
-app.use(RecordsRouter);
+app.use('/patients', PatientRouter);
+app.use('/staff', StaffRouter);
+app.use('/medications', MedicationsRouter);
+app.use('/records', RecordsRouter);
 
 
 app.use(defaultRouter);
