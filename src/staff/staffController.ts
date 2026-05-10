@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { Staff } from '../models/staff.js';
+import { sendErrorResponse } from '../utils/http.js';
 
 export async function createStaff(req: Request, res: Response) {
   try{
@@ -7,7 +8,7 @@ export async function createStaff(req: Request, res: Response) {
     const savedStaff = await staff.save();
     res.status(201).send(savedStaff);
   } catch (error){
-    res.status(400).send(error);
+    sendErrorResponse(res, error);
   }
 }
 
@@ -16,7 +17,7 @@ export async function getAllStaff(req: Request, res: Response){
     const staff = await Staff.find();
     res.send(staff);
   }catch (error){
-    res.status(400).send(error);
+    sendErrorResponse(res, error);
   }
 }
 
@@ -34,7 +35,7 @@ export async function updateStaff(req: Request, res: Response) {
 
     res.send(staff);
   } catch (error) {
-    res.status(400).send(error);
+    sendErrorResponse(res, error);
   }
 }
 
@@ -46,7 +47,7 @@ export async function findStaffById(req: Request, res: Response) {
     }
     res.send(staff);
   } catch (error) {
-    res.status(400).send(error);
+    sendErrorResponse(res, error);
   }
 }
 
@@ -57,7 +58,7 @@ export async function deleteStaff(req: Request, res: Response) {
     const result = await Staff.deleteMany(filter);
     res.send(result);
   } catch (error) {
-    res.status(400).send(error);
+    sendErrorResponse(res, error);
   }
 }
 
@@ -69,6 +70,6 @@ export async function deleteStaffById(req: Request, res: Response) {
     }
     res.send({ message: 'Staff deleted successfully' });
   } catch (error) {
-    res.status(400).send(error);
+    sendErrorResponse(res, error);
   }
 }

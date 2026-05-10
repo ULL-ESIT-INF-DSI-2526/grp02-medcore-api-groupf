@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { Medications } from '../models/medications.js';
+import { sendErrorResponse } from '../utils/http.js';
 
 export async function createMedication(req: Request, res: Response) {
   const medication = new Medications(req.body);
@@ -7,7 +8,7 @@ export async function createMedication(req: Request, res: Response) {
   medication.save().then((medication) => {
     res.status(201).send(medication);
   }).catch((error) => {
-    res.status(400).send(error);
+    sendErrorResponse(res, error);
   });
 }
 
@@ -16,7 +17,7 @@ export async function getAllMedications(req: Request, res: Response) {
     const medications = await Medications.find();
     res.send(medications);
   } catch (error) {
-    res.status(400).send(error);
+    sendErrorResponse(res, error);
   }
 }
 
@@ -34,7 +35,7 @@ export async function updateMedication(req: Request, res: Response) {
 
     res.send(medication);
   } catch (error) {
-    res.status(400).send(error);
+    sendErrorResponse(res, error);
   }
 }
 
@@ -46,7 +47,7 @@ export async function getMedicationById(req: Request, res: Response) {
     }
     res.send(medication);
   } catch (error) {
-    res.status(400).send(error);
+    sendErrorResponse(res, error);
   }
 }
 
@@ -58,7 +59,7 @@ export async function getMedicationByCode(req: Request, res: Response) {
     }
     res.send(medication);
   } catch (error) {
-    res.status(400).send(error);
+    sendErrorResponse(res, error);
   }
 }
 
@@ -78,7 +79,7 @@ export async function deleteMedication(req: Request, res: Response) {
 
     res.send({ message: 'Medication deleted successfully' });
   } catch (error) {
-    res.status(400).send(error);
+    sendErrorResponse(res, error);
   }
 }
 
@@ -99,6 +100,6 @@ export async function deleteAllMedications(req: Request, res: Response) {
     const result = await Medications.deleteMany({});
     res.send({ message: `${result.deletedCount} medications deleted successfully` });
   } catch (error) {
-    res.status(400).send(error);
+    sendErrorResponse(res, error);
   }
 }
