@@ -7,3 +7,4 @@ dev.env
 coverage
 *.log
 .vscode
+src/seed.ts

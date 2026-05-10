@@ -9,14 +9,23 @@ import { sendErrorResponse } from './utils/http.js';
 
 export const app = express();
 app.use(express.json());
+
+app.get('/', (req, res) => {
+  res.send('¡API funcionando correctamente!');
+});
+
 app.use(PatientRouter);
 app.use(StaffRouter);
 app.use(MedicationsRouter);
 app.use(RecordsRouter);
+
+
 app.use(defaultRouter);
 
 app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
 	sendErrorResponse(res, error);
 });
+
+
 
 export default app;
