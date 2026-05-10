@@ -6,7 +6,7 @@ export async function createMedication(req: Request, res: Response) {
   const medication = new Medications(req.body);
 
   medication.save().then((medication) => {
-    res.status(201).send(medication);
+    return res.status(201).send(medication);
   }).catch((error) => {
     sendErrorResponse(res, error);
   });
@@ -15,7 +15,7 @@ export async function createMedication(req: Request, res: Response) {
 export async function getAllMedications(req: Request, res: Response) {
   try {
     const medications = await Medications.find();
-    res.send(medications);
+    return res.status(200).send(medications);
   } catch (error) {
     sendErrorResponse(res, error);
   }
@@ -33,7 +33,7 @@ export async function updateMedication(req: Request, res: Response) {
       return res.status(404).send({ message: 'Medication not found' });
     }
 
-    res.send(medication);
+    return res.status(200).send(medication);
   } catch (error) {
     sendErrorResponse(res, error);
   }
@@ -45,7 +45,7 @@ export async function getMedicationById(req: Request, res: Response) {
     if (!medication) {
       return res.status(404).send({ message: 'Medication not found' });
     }
-    res.send(medication);
+    return res.status(200).send(medication);
   } catch (error) {
     sendErrorResponse(res, error);
   }
@@ -57,7 +57,7 @@ export async function getMedicationByCode(req: Request, res: Response) {
     if (!medication) {
       return res.status(404).send({ message: 'Medication not found' });
     }
-    res.send(medication);
+    return res.status(200).send(medication);
   } catch (error) {
     sendErrorResponse(res, error);
   }
@@ -77,7 +77,7 @@ export async function deleteMedication(req: Request, res: Response) {
       return res.status(404).send({ message: 'Medication not found' });
     }
 
-    res.send({ message: 'Medication deleted successfully' });
+    return res.status(200).send({ message: 'Medication deleted successfully' });
   } catch (error) {
     sendErrorResponse(res, error);
   }
@@ -89,16 +89,16 @@ export async function deleteMedicationById(req: Request, res: Response) {
     if (!medication) {
       return res.status(404).send({ message: 'Medication not found' });
     }
-    res.send({ message: 'Medication deleted successfully' });
+    return res.status(200).send({ message: 'Medication deleted successfully' });
   } catch (error) {
-    res.status(400).send(error);
+    sendErrorResponse(res, error);
   }
 } 
 
 export async function deleteAllMedications(req: Request, res: Response) {
   try {
     const result = await Medications.deleteMany({});
-    res.send({ message: `${result.deletedCount} medications deleted successfully` });
+    return res.status(200).send({ message: `${result.deletedCount} medications deleted successfully` });
   } catch (error) {
     sendErrorResponse(res, error);
   }

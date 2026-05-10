@@ -6,7 +6,7 @@ export async function createPatient(req: Request, res: Response) {
   try {
     const patient = new Patient(req.body);
     const savedPatient = await patient.save();
-    res.status(201).send(savedPatient);
+    return res.status(201).send(savedPatient);
   } catch (error) {
     sendErrorResponse(res, error);
   }
@@ -15,7 +15,7 @@ export async function createPatient(req: Request, res: Response) {
 export async function getPatients(_req: Request, res: Response) {
   try {
     const patients = await Patient.find();
-    res.send(patients);
+    return res.status(200).send(patients);
   } catch (error) {
     sendErrorResponse(res, error);
   }
@@ -29,7 +29,7 @@ export async function getPatientById(req: Request, res: Response) {
       return res.status(404).send({ message: 'Patient not found' });
     }
 
-    res.send(patient);
+    return res.status(200).send(patient);
   } catch (error) {
     sendErrorResponse(res, error);
   }
@@ -47,7 +47,7 @@ export async function updatePatient(req: Request, res: Response) {
       return res.status(404).send({ message: 'Patient not found' });
     }
 
-    res.send(patient);
+    return res.status(200).send(patient);
   } catch (error) {
     sendErrorResponse(res, error);
   }
@@ -61,13 +61,13 @@ export async function deletePatient(req: Request, res: Response) {
     // If an identification number is provided, delete a single patient matching it
     if (identificationNumber) {
       const result = await Patient.deleteOne({ identificationNumber });
-      return res.send(result);
+      return res.status(200).send(result);
     }
 
     // If a fullName is provided, delete a single patient matching the full name
     if (fullName) {
       const result = await Patient.deleteOne({ fullName });
-      return res.send(result);
+      return res.status(200).send(result);
     }
 
     // No specific filter provided -> reject the request to avoid accidental full deletes
@@ -85,7 +85,7 @@ export async function deletePatientById(req: Request, res: Response) {
       return res.status(404).send({ message: 'Patient not found' });
     }
 
-    res.send(patient);
+    return res.status(200).send(patient);
   } catch (error) {
     sendErrorResponse(res, error);
   }
