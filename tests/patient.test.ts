@@ -43,10 +43,8 @@ describe('Patient API', () => {
   })
 
   afterAll(async () => {
-    await request(app)
-      .delete(`/patients/`)
-      .expect(200);
-
+    // Clean up any remaining patients directly via the model to avoid relying on HTTP
+    await Patient.deleteMany({});
     await disconnectDB();
   });
 
@@ -213,11 +211,10 @@ describe('Patient API', () => {
   });
 
   test("should try delete all patients and catch status error 400", async () => {
-    vi.spyOn(Patient, 'deleteMany').mockRejectedValueOnce(new Error('Database error'));
-
+    // When no filter is provided, the endpoint should reject to avoid mass deletion
     await request(app)
       .delete('/patients')
-      .expect(500);
+      .expect(400);
   });
 
   test("should delete a patient by id", async () => {

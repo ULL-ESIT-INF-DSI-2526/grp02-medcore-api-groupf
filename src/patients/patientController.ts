@@ -56,12 +56,22 @@ export async function updatePatient(req: Request, res: Response) {
 export async function deletePatient(req: Request, res: Response) {
   try {
     const identificationNumber = req.body?.identificationNumber;
-    const filter = identificationNumber ? { identificationNumber } : {};
-    const result = await Patient.deleteOne(filter);
+    const fullName = req.body?.fullName;
 
-    
+    // If an identification number is provided, delete a single patient matching it
+    if (identificationNumber) {
+      const result = await Patient.deleteOne({ identificationNumber });
+      return res.send(result);
+    }
 
-    res.send(result);
+    // If a fullName is provided, delete a single patient matching the full name
+    if (fullName) {
+      const result = await Patient.deleteOne({ fullName });
+      return res.send(result);
+    }
+
+    // No specific filter provided -> reject the request to avoid accidental full deletes
+    return res.status(400).send({ message: 'No delete filter provided. Specify identificationNumber or fullName.' });
   } catch (error) {
     sendErrorResponse(res, error);
   }
