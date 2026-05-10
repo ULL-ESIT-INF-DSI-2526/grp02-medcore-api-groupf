@@ -2,6 +2,13 @@ import { Request, Response } from 'express';
 import { Staff } from '../models/staff.js';
 import { sendErrorResponse } from '../utils/http.js';
 
+/**
+ * Create a new Staff member document in the database.
+ * @param req - Express request.
+ * @param res - Express response.
+ * @returns '201' with the created StaffDocument.
+ * 
+ */
 export async function createStaff(req: Request, res: Response) {
   try{
     const staff = new Staff(req.body);
@@ -11,7 +18,13 @@ export async function createStaff(req: Request, res: Response) {
     sendErrorResponse(res, error);
   }
 }
-
+/**
+ * Returns all staff member
+ * @param req - Express request.
+ * @param res - Express response.
+ * @returns '200' with an array of StaffDocument.
+ * 
+ */
 export async function getAllStaff(req: Request, res: Response){
   try{
     const staff = await Staff.find();
@@ -20,7 +33,14 @@ export async function getAllStaff(req: Request, res: Response){
     sendErrorResponse(res, error);
   }
 }
-
+/**
+ * Updates a staff member by '_id'
+ * @param req - Express request.
+ * @param res - Express response.
+ * @returns '200' with the updated StaffDocument.
+ * @returns '404' if no staff member matches the given 'id'.
+ * 
+ */
 export async function updateStaff(req: Request, res: Response) {
   try {
     const staff = await Staff.findByIdAndUpdate(req.params.id, req.body, {
@@ -38,7 +58,14 @@ export async function updateStaff(req: Request, res: Response) {
     sendErrorResponse(res, error);
   }
 }
-
+/**
+ * Returns a staff member document by its '_id'
+ * @param req - Express request.
+ * @param res - Express response.
+ * @returns '200' with the marching StaffDocument.
+ * @returns '404' if no staff member matches the given 'id'.
+ * 
+ */
 export async function findStaffById(req: Request, res: Response) {
   try {
     const staff = await Staff.findById(req.params.id);
@@ -50,7 +77,13 @@ export async function findStaffById(req: Request, res: Response) {
     sendErrorResponse(res, error);
   }
 }
-
+/**
+ * Deletes a staff by fullName
+ * @param req - Express request.
+ * @param res - Express response.
+ * @returns '200' with the number of documents deleted.
+ * 
+ */
 export async function deleteStaff(req: Request, res: Response) {
   try {
     const fullName = req.body?.fullName;
@@ -61,7 +94,14 @@ export async function deleteStaff(req: Request, res: Response) {
     sendErrorResponse(res, error);
   }
 }
-
+/**
+ * Deletes a staff member document by its '_id'
+ * @param req - Express request.
+ * @param res - Express response.
+ * @returns '200' with a confirmation message if the staff was deleted.
+ * @returns '404' if no staff member matches the given 'id'.
+ * 
+ */
 export async function deleteStaffById(req: Request, res: Response) {
   try {
     const staff = await Staff.findByIdAndDelete(req.params.id);

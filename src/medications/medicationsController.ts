@@ -6,7 +6,6 @@ import { sendErrorResponse } from '../utils/http.js';
  * @param req - Express request.
  * @param res - Express response.
  * @returns '201' with the created medication document
- * @returns '400' if validations fails.
  * 
  */
 export async function createMedication(req: Request, res: Response) {
@@ -39,7 +38,6 @@ export async function getAllMedications(req: Request, res: Response) {
  * @param res - Express response.
  * @returns '200' with the updated medication document.
  * @returns '404' if no medication matches the 'id'
- * @returns '400' if validation fails on the updated fields.
  * 
  */
 export async function updateMedication(req: Request, res: Response) {

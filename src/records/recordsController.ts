@@ -361,7 +361,11 @@ async function calculateLegacyPrescriptionTotal(
 
   return total;
 }
-
+/**
+ * Converts the updateRecordInput into PrescriptionMedication
+ * @param prescription - Prescription array
+ * @returns Normalized array
+ */
 function normalizeLegacyPrescription(
   prescription: UpdateRecordInput['prescription']
 ): PrescriptionMedications[] {
@@ -371,6 +375,13 @@ function normalizeLegacyPrescription(
     dosage: item.dosage
   }));
 }
+/**
+ * Creates a medical Record
+ * @param req - Express request.
+ * @param res - Express response.
+ * @returns '201' with the created Records document.
+ * 
+ */
 export async function createRecords(req: Request, res: Response) {
   try {
     const record = await createRecord(req.body);
@@ -379,7 +390,15 @@ export async function createRecords(req: Request, res: Response) {
     return sendErrorResponse(res, error);
   }
 }
-
+/**
+ * Returns all records from the database.
+ * @param req - Express request.
+ * @param res - Express response.
+ * @returns '200' with the created Records document.
+ * @returns '400' if date format is invalid.
+ * @returns '404' if no patient matches 'identificationNumber'.
+ * 
+ */
 export async function getAllRecords(req: Request, res: Response) {
   try {
     const { identificationNumber, startDate, endDate, type } = req.query;
@@ -418,7 +437,13 @@ export async function getAllRecords(req: Request, res: Response) {
     return sendErrorResponse(res, error);
   }
 }
-
+/**
+ * Returns a Record by id
+ * @param req - Express request.
+ * @param res - Express response.
+ * @returns '200' with the matching Records document.
+ * @returns '404' if no record matches the given 'id'.
+ */
 export async function getRecordById(req: Request, res: Response) {
   try {
     const record = await findRecordsById(String(req.params.id));
@@ -431,7 +456,15 @@ export async function getRecordById(req: Request, res: Response) {
     return sendErrorResponse(res, error);
   }
 }
-
+/**
+ * Update a Record by its '_id'
+ * @param req - Express request.
+ * @param res - Express response.
+ * @returns '200' with the updated Record document.
+ * @returns '404' if no record matches the given 'id'.
+ * @returns '409' if staff is inactive or any medication is expired.
+ * 
+ */
 export async function updateRecord(req: Request, res: Response) {
   try {
     const record = await updateRecordsByID(String(req.params.id), req.body);
@@ -444,7 +477,14 @@ export async function updateRecord(req: Request, res: Response) {
     return sendErrorResponse(res, error);
   }
 }
-
+/**
+ * Deletes a record by '_id'
+ * @param req - Express request.
+ * @param res - Express response.
+ * @returns '200' with the delected Records document.
+ * @returns '404' if no record matches the provided 'id'
+ * 
+ */
 export async function deleteRecordById(req: Request, res: Response) {
   try {
     const record = await deleteRecord(String(req.params.id));

@@ -7,7 +7,6 @@ import { sendErrorResponse } from '../utils/http.js';
  * @param req - Express request.
  * @param res - Express response.
  * @returns '201' with the created patient document.
- * @returns '400' if validation fails
  * 
  */
 export async function createPatient(req: Request, res: Response) {
@@ -39,7 +38,7 @@ export async function getPatients(_req: Request, res: Response) {
  * @param req - Express request.
  * @param res - Express response
  * @returns '200' with the matching PatientDocument.
- * @returns '400' if no patient matches the given 'id'.
+ * @returns '404' if no patient matches the given 'id'.
  * 
  */
 export async function getPatientById(req: Request, res: Response) {
@@ -61,7 +60,6 @@ export async function getPatientById(req: Request, res: Response) {
  * @param res - Express response
  * @returns '200' with the updated patient document.
  * @returns '404' if no patient matches the provided 'id'.
- * @returns '400' if validation fails on the updated fields.
  * 
  */
 export async function updatePatient(req: Request, res: Response) {
@@ -117,7 +115,7 @@ export async function deletePatient(req: Request, res: Response) {
  * @param req - Express request.
  * @param res - Express response
  * @returns '201' with the deleted PatientDocument.
- * @returns '400' if no patient matches the provided 'id'.
+ * @returns '404' if no patient matches the provided 'id'.
  * 
  */
 export async function deletePatientById(req: Request, res: Response) {
